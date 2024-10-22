@@ -20,16 +20,18 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
-
     let args = Args::try_from_slice(data)?;
 
+    // Verify that the funding user is indeed the one initiating this IX
     ensure_is_signer(payer)?;
     ensure_is_signer(user_funding)?;
 
+    // Verify that the escrow PDA is currently un-initialized
     ensure_is_owned_by_program(escrow_lamports_pda, &system_program::ID)?;
 
+    // Verify the seeds of the escrow PDA
     let escrow_lamports_seeds = &[
-        // TODO - write the seeds generator function
+        // TODO - write seeds generator macro
         EscrowLamports::SEEDS_PREFIX,
         &user_funding.key.to_bytes(),
         &user_claimer.key.to_bytes(),
@@ -38,6 +40,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     ];
     ensure_is_pda(escrow_lamports_pda, escrow_lamports_seeds, program_id)?;
 
+    // Initialize the escrow PDA
     create_pda(
         payer,
         escrow_lamports_pda,
@@ -47,6 +50,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         system_program,
     )?;
 
+    // Write the authority keys for the escrow
     let mut escrow_lamports =
         EscrowLamports::deserialize(&mut &**escrow_lamports_pda.data.borrow())?;
 
@@ -55,5 +59,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     escrow_lamports.serialize(&mut &mut escrow_lamports_pda.try_borrow_mut_data()?.as_mut())?;
 
+    // Done
     Ok(())
 }

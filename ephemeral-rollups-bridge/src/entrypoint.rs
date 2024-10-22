@@ -3,7 +3,9 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::instruction::{escrow_lamports_claim, escrow_lamports_create, escrow_lamports_delegate};
+use crate::instruction::{
+    escrow_lamports_claim, escrow_lamports_close, escrow_lamports_create, escrow_lamports_delegate,
+};
 
 fn process_instruction(
     program_id: &Pubkey,
@@ -32,6 +34,9 @@ fn process_instruction(
         }
         escrow_lamports_delegate::DISCRIMINANT => {
             escrow_lamports_delegate::process(program_id, accounts, data)
+        }
+        escrow_lamports_close::DISCRIMINANT => {
+            escrow_lamports_close::process(program_id, accounts, data)
         }
         _ => Err(ProgramError::InvalidInstructionData),
     }

@@ -1,14 +1,16 @@
-use std::{i64, u32};
-
 use borsh::{BorshDeserialize, BorshSerialize};
-use ephemeral_rollups_sdk::cpi::delegate_account;
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
+use solana_program::rent::Rent;
+use solana_program::system_instruction::transfer;
+use solana_program::sysvar::Sysvar;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
 use crate::state::escrow_lamports::EscrowLamports;
+use crate::util::close::close_pda;
 use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
 
-pub const DISCRIMINANT: [u8; 8] = [0x98, 0xe4, 0x41, 0xd1, 0x81, 0xb6, 0xc9, 0x3b];
+pub const DISCRIMINANT: [u8; 8] = [0xcd, 0xde, 0x5a, 0xf0, 0x3b, 0x67, 0x97, 0xc0];
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
@@ -16,7 +18,7 @@ pub struct Args {
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    let [payer, user_funding, user_claimer, validator_id, escrow_lamports_pda, delegation_buffer, delegation_record, delegation_metadata, delegation_program, owner_program, system_program] =
+    let [payer, user_funding, user_claimer, validator_id, escrow_lamports_pda, system_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -41,25 +43,36 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     ];
     ensure_is_pda(escrow_lamports_pda, escrow_lamports_seeds, program_id)?;
 
-    // Verify that the owner_program account passed as parameter is valid
-    if owner_program.key.ne(program_id) {
-        return Err(ProgramError::IncorrectProgramId);
+    // Verify that the funding user is the authority for this escrow PDA
+    let escrow_lamports =
+        EscrowLamports::try_from_slice(&mut &**escrow_lamports_pda.data.borrow())?;
+    if user_funding.key.ne(&escrow_lamports.user_funding) {
+        return Err(ProgramError::InvalidAccountOwner);
     }
 
-    // Delegate the escrow, relinquish control on chain (it will become claimable in the Ephem)
-    delegate_account(
-        payer,
-        escrow_lamports_pda,
-        owner_program,
-        delegation_buffer,
-        delegation_record,
-        delegation_metadata,
-        delegation_program,
-        system_program,
-        escrow_lamports_seeds,
-        i64::MAX,
-        u32::MAX,
+    // Send all the remaining lamports back to the funding user
+    let minimum_lamports = Rent::get()?.minimum_balance(EscrowLamports::space());
+    let remaining_lamports = escrow_lamports_pda
+        .lamports()
+        .saturating_sub(minimum_lamports);
+    invoke_signed(
+        &transfer(
+            escrow_lamports_pda.key,
+            user_funding.key,
+            remaining_lamports,
+        ),
+        &[escrow_lamports_pda.clone(), user_funding.clone()],
+        &[escrow_lamports_seeds],
     )?;
 
+    // Close the PDA
+    close_pda(
+        payer,
+        escrow_lamports_pda,
+        escrow_lamports_seeds,
+        system_program,
+    )?;
+
+    // Done
     Ok(())
 }
