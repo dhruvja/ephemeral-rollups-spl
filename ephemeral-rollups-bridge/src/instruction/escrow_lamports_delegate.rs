@@ -3,6 +3,7 @@ use ephemeral_rollups_sdk::cpi::delegate_account;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
+use crate::escrow_lamports_seeds_generator;
 use crate::state::escrow_lamports::EscrowLamports;
 use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
 
@@ -14,6 +15,7 @@ pub struct Args {
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
+    // Read instruction inputs
     let [payer, user_funding, user_claimer, validator_id, escrow_lamports_pda, delegation_buffer, delegation_record, delegation_metadata, delegation_program, owner_program, system_program] =
         accounts
     else {
@@ -28,14 +30,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     ensure_is_owned_by_program(escrow_lamports_pda, program_id)?;
 
     // Verify the seeds of the escrow PDA
-    let escrow_lamports_seeds = &[
-        // TODO - write seeds generator macro
-        EscrowLamports::SEEDS_PREFIX,
-        &user_funding.key.to_bytes(),
-        &user_claimer.key.to_bytes(),
-        &validator_id.key.to_bytes(),
-        &args.index.to_le_bytes(),
-    ];
+    let escrow_lamports_seeds = escrow_lamports_seeds_generator!(
+        user_funding.key,
+        user_claimer.key,
+        validator_id.key,
+        args.index
+    );
     ensure_is_pda(escrow_lamports_pda, escrow_lamports_seeds, program_id)?;
 
     // Verify that the owner_program account passed as parameter is valid
@@ -58,5 +58,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         u32::MAX,
     )?;
 
+    // Done
     Ok(())
 }

@@ -5,6 +5,7 @@ use solana_program::{
 
 use crate::instruction::{
     escrow_lamports_claim, escrow_lamports_close, escrow_lamports_create, escrow_lamports_delegate,
+    escrow_lamports_undelegate,
 };
 
 fn process_instruction(
@@ -29,11 +30,14 @@ fn process_instruction(
         escrow_lamports_create::DISCRIMINANT => {
             escrow_lamports_create::process(program_id, accounts, data)
         }
+        escrow_lamports_delegate::DISCRIMINANT => {
+            escrow_lamports_delegate::process(program_id, accounts, data)
+        }
         escrow_lamports_claim::DISCRIMINANT => {
             escrow_lamports_claim::process(program_id, accounts, data)
         }
-        escrow_lamports_delegate::DISCRIMINANT => {
-            escrow_lamports_delegate::process(program_id, accounts, data)
+        escrow_lamports_undelegate::DISCRIMINANT => {
+            escrow_lamports_undelegate::process(program_id, accounts, data)
         }
         escrow_lamports_close::DISCRIMINANT => {
             escrow_lamports_close::process(program_id, accounts, data)
