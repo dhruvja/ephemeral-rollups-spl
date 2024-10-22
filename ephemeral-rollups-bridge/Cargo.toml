@@ -1,0 +1,18 @@
+[package]
+name = "ephemeral-rollups-escrow-sol"
+version = "0.0.1"
+description = "Ephemeral Rollups Bridge"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "ephemeral_rollups_bridge"
+
+[features]
+no-entrypoint = []
+default = []
+
+[dependencies]
+solana-program = "1.18.21"
+borsh = "0.10.3"
+ephemeral-rollups-sdk = "0.0.7"
