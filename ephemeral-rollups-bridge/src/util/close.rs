@@ -5,10 +5,10 @@ use solana_program::{
     system_instruction::{allocate, assign, transfer},
 };
 
-pub(crate) fn close_pda<'info>(
-    payer: &AccountInfo<'info>,
+pub fn close_pda<'info>(
     pda: &AccountInfo<'info>,
     pda_seeds: &[&[u8]],
+    spill: &AccountInfo<'info>,
     system_program: &AccountInfo<'info>,
 ) -> ProgramResult {
     // Dealloc all data
@@ -19,13 +19,13 @@ pub(crate) fn close_pda<'info>(
     )?;
     // Siphon all lamports
     invoke_signed(
-        &transfer(pda.key, payer.key, pda.lamports()),
-        &[pda.clone(), payer.clone(), system_program.clone()],
+        &transfer(pda.key, spill.key, pda.lamports()),
+        &[pda.clone(), spill.clone(), system_program.clone()],
         &[pda_seeds],
     )?;
     // Reassign to system program
     invoke_signed(
-        &assign(pda.key, &system_program.key),
+        &assign(pda.key, system_program.key),
         &[pda.clone(), system_program.clone()],
         &[pda_seeds],
     )?;

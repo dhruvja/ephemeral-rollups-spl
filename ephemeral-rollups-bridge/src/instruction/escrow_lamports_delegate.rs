@@ -1,5 +1,3 @@
-use std::{i64, u32};
-
 use borsh::{BorshDeserialize, BorshSerialize};
 use ephemeral_rollups_sdk::cpi::delegate_account;
 use solana_program::program_error::ProgramError;
@@ -24,7 +22,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     let args = Args::try_from_slice(data)?;
 
     // Verify that the funding user is indeed the one initiating this IX
-    ensure_is_signer(payer)?;
     ensure_is_signer(user_funding)?;
 
     // Verify that the program has proper control of the PDA (and that it's been initialized)

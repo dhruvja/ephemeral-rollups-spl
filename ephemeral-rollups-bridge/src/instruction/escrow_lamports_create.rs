@@ -23,7 +23,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     let args = Args::try_from_slice(data)?;
 
     // Verify that the funding user is indeed the one initiating this IX
-    ensure_is_signer(payer)?;
     ensure_is_signer(user_funding)?;
 
     // Verify that the escrow PDA is currently un-initialized
@@ -50,13 +49,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         system_program,
     )?;
 
-    // Write the authority keys for the escrow
-    let mut escrow_lamports =
-        EscrowLamports::deserialize(&mut &**escrow_lamports_pda.data.borrow())?;
-
-    escrow_lamports.user_funding = *user_funding.key;
-    escrow_lamports.user_claimer = *user_claimer.key;
-
+    // Write the authority keys in the escrow account
+    let escrow_lamports = EscrowLamports {
+        user_funding: *user_funding.key,
+        user_claimer: *user_claimer.key,
+    };
     escrow_lamports.serialize(&mut &mut escrow_lamports_pda.try_borrow_mut_data()?.as_mut())?;
 
     // Done

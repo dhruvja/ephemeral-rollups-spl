@@ -18,7 +18,7 @@ pub struct Args {
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    let [payer, user_funding, user_claimer, validator_id, escrow_lamports_pda, system_program] =
+    let [user_funding, user_claimer, validator_id, escrow_lamports_pda, spill, system_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -26,7 +26,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     let args = Args::try_from_slice(data)?;
 
     // Verify that the funding user is indeed the one initiating this IX
-    ensure_is_signer(payer)?;
     ensure_is_signer(user_funding)?;
 
     // Verify that the program has proper control of the PDA (and that it's been initialized)
@@ -44,8 +43,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     ensure_is_pda(escrow_lamports_pda, escrow_lamports_seeds, program_id)?;
 
     // Verify that the funding user is the authority for this escrow PDA
-    let escrow_lamports =
-        EscrowLamports::try_from_slice(&mut &**escrow_lamports_pda.data.borrow())?;
+    let escrow_lamports = EscrowLamports::try_from_slice(&escrow_lamports_pda.data.borrow())?;
     if user_funding.key.ne(&escrow_lamports.user_funding) {
         return Err(ProgramError::InvalidAccountOwner);
     }
@@ -67,9 +65,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Close the PDA
     close_pda(
-        payer,
         escrow_lamports_pda,
         escrow_lamports_seeds,
+        spill,
         system_program,
     )?;
 

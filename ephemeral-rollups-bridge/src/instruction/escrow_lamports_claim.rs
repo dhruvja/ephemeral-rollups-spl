@@ -18,13 +18,12 @@ pub struct Args {
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    let [payer, user_funding, user_claimer, validator_id, escrow_lamports_pda] = accounts else {
+    let [user_funding, user_claimer, validator_id, escrow_lamports_pda] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
 
-    // Verify that the claimer is indeed the one initiating this IX
-    ensure_is_signer(payer)?;
+    // Verify that the claimer user is indeed the one initiating this IX
     ensure_is_signer(user_claimer)?;
 
     // Verify that the program has proper control of the PDA (and that it's been initialized)
@@ -42,8 +41,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     ensure_is_pda(escrow_lamports_pda, escrow_lamports_seeds, program_id)?;
 
     // Verify that the claimer user is the authority for this escrow PDA
-    let escrow_lamports =
-        EscrowLamports::try_from_slice(&mut &**escrow_lamports_pda.data.borrow())?;
+    let escrow_lamports = EscrowLamports::try_from_slice(&escrow_lamports_pda.data.borrow())?;
     if user_claimer.key.ne(&escrow_lamports.user_claimer) {
         return Err(ProgramError::InvalidAccountOwner);
     }
