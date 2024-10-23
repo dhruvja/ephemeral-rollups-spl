@@ -1,5 +1,5 @@
 [package]
-name = "ephemeral-rollups-escrow"
+name = "ephemeral-rollups-bridge"
 version = "0.0.1"
 description = "Ephemeral Rollups Bridge"
 edition = "2021"

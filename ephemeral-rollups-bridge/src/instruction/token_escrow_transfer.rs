@@ -10,14 +10,14 @@ pub const DISCRIMINANT: [u8; 8] = [0x01, 0x1d, 0xe7, 0xcb, 0x37, 0x6e, 0x04, 0x7
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
-    source_index: u64,
-    destination_index: u64,
-    amount: u64,
+    pub source_index: u64,
+    pub destination_index: u64,
+    pub amount: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [source_authority, destination_authority, validator_id, token_mint, source_token_escrow_pda, destination_token_escrow_pda] =
+    let [source_authority, destination_authority, validator, token_mint, source_token_escrow_pda, destination_token_escrow_pda] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -36,7 +36,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Verify the seeds of the escrow PDA
     let source_token_escrow_seeds = token_escrow_seeds_generator!(
         source_authority.key,
-        validator_id.key,
+        validator.key,
         token_mint.key,
         args.source_index
     );
@@ -49,7 +49,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Verify the seeds of the escrow PDA
     let destination_token_escrow_seeds = token_escrow_seeds_generator!(
         destination_authority.key,
-        validator_id.key,
+        validator.key,
         token_mint.key,
         args.destination_index
     );
@@ -62,6 +62,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Update the source escrow amount (panic if not enough amount available)
     let mut source_token_escrow_data =
         TokenEscrow::try_from_slice(&source_token_escrow_pda.data.borrow())?;
+    if source_token_escrow_data.discriminant != TokenEscrow::discriminant() {
+        return Err(ProgramError::InvalidAccountData);
+    }
     source_token_escrow_data.amount = source_token_escrow_data
         .amount
         .checked_sub(args.amount)
@@ -72,6 +75,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Update the destination escrow amount (if everything else suceeded)
     let mut destination_token_escrow_data =
         TokenEscrow::try_from_slice(&destination_token_escrow_pda.data.borrow())?;
+    if destination_token_escrow_data.discriminant != TokenEscrow::discriminant() {
+        return Err(ProgramError::InvalidAccountData);
+    }
     destination_token_escrow_data.amount = destination_token_escrow_data
         .amount
         .checked_add(args.amount)

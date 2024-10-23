@@ -11,11 +11,11 @@ pub const DISCRIMINANT: [u8; 8] = [0x1c, 0x69, 0x76, 0xee, 0x37, 0xb8, 0xab, 0x4
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
-    index: u64,
+    pub index: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    let [payer, authority, validator_id, lamport_escrow_pda, magic_context, magic_program] =
+    let [payer, authority, validator, lamport_escrow_pda, magic_context_pda, magic_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -30,12 +30,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
-        lamport_escrow_seeds_generator!(authority.key, validator_id.key, args.index);
+        lamport_escrow_seeds_generator!(authority.key, validator.key, args.index);
     ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized
     let lamport_escrow_data = LamportEscrow::try_from_slice(&lamport_escrow_pda.data.borrow())?;
-    if !lamport_escrow_data.initialized {
+    if lamport_escrow_data.discriminant != LamportEscrow::discriminant() {
         return Err(ProgramError::InvalidAccountData);
     }
 
@@ -43,8 +43,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     commit_and_undelegate_accounts(
         payer,
         vec![lamport_escrow_pda],
-        magic_context,
-        magic_program,
+        magic_context_pda,
+        magic_program_id,
     )?;
 
     // Done

@@ -12,13 +12,13 @@ pub const DISCRIMINANT: [u8; 8] = [0xe0, 0x6c, 0xbe, 0x01, 0x34, 0xe4, 0x4b, 0xf
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
-    index: u64,
-    amount: u64,
+    pub index: u64,
+    pub amount: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [source_authority, source_account, authority, validator_id, token_mint, token_escrow_pda, token_vault_pda, token_program] =
+    let [source_authority, source_account, authority, validator, token_mint, token_escrow_pda, token_vault_pda, token_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -33,11 +33,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, validator_id.key, token_mint.key, args.index);
+        token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Verify the seeds of the vault PDA
-    let token_vault_seeds = token_vault_seeds_generator!(validator_id.key, token_mint.key);
+    let token_vault_seeds = token_vault_seeds_generator!(validator.key, token_mint.key);
     ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
 
     // Proceed to transfer the token amount from source_account to vault
@@ -59,6 +59,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Update the escrow amount (if the transfer succeeded)
     let mut token_escrow_data = TokenEscrow::try_from_slice(&token_escrow_pda.data.borrow())?;
+    if token_escrow_data.discriminant != TokenEscrow::discriminant() {
+        return Err(ProgramError::InvalidAccountData);
+    }
     token_escrow_data.amount = token_escrow_data.amount.checked_add(args.amount).unwrap();
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
 

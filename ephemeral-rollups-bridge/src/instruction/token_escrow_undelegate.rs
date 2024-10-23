@@ -11,11 +11,11 @@ pub const DISCRIMINANT: [u8; 8] = [0x4b, 0x9c, 0x96, 0x18, 0xdf, 0x98, 0x31, 0x2
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
-    index: u64,
+    pub index: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    let [payer, authority, validator_id, token_mint, token_escrow_pda, magic_context, magic_program] =
+    let [payer, authority, validator, token_mint, token_escrow_pda, magic_context_pda, magic_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -30,17 +30,22 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, validator_id.key, token_mint.key, args.index);
+        token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized
     let token_escrow_data = TokenEscrow::try_from_slice(&token_escrow_pda.data.borrow())?;
-    if !token_escrow_data.initialized {
+    if token_escrow_data.discriminant != TokenEscrow::discriminant() {
         return Err(ProgramError::InvalidAccountData);
     }
 
     // Request undelegation inside the ER
-    commit_and_undelegate_accounts(payer, vec![token_escrow_pda], magic_context, magic_program)?;
+    commit_and_undelegate_accounts(
+        payer,
+        vec![token_escrow_pda],
+        magic_context_pda,
+        magic_program_id,
+    )?;
 
     // Done
     Ok(())

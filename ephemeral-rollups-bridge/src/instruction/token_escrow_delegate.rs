@@ -11,12 +11,12 @@ pub const DISCRIMINANT: [u8; 8] = [0xc6, 0xd6, 0x5c, 0x5f, 0xf8, 0xcc, 0xe0, 0x2
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
-    index: u64,
+    pub index: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [payer, authority, validator_id, token_mint, token_escrow_pda, delegation_buffer, delegation_record, delegation_metadata, delegation_program, owner_program, system_program] =
+    let [payer, authority, validator, token_mint, token_escrow_pda, delegation_buffer_pda, delegation_record_pda, delegation_metadata_pda, delegation_program_id, owner_program_id, system_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -31,17 +31,17 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, validator_id.key, token_mint.key, args.index);
+        token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized
     let token_escrow_data = TokenEscrow::try_from_slice(&token_escrow_pda.data.borrow())?;
-    if !token_escrow_data.initialized {
+    if token_escrow_data.discriminant != TokenEscrow::discriminant() {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Verify that the owner_program account passed as parameter is valid
-    if owner_program.key.ne(program_id) {
+    // Verify that the owner_program_id account passed as parameter is valid
+    if owner_program_id.key.ne(program_id) {
         return Err(ProgramError::IncorrectProgramId);
     }
 
@@ -49,12 +49,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     delegate_account(
         payer,
         token_escrow_pda,
-        owner_program,
-        delegation_buffer,
-        delegation_record,
-        delegation_metadata,
-        delegation_program,
-        system_program,
+        owner_program_id,
+        delegation_buffer_pda,
+        delegation_record_pda,
+        delegation_metadata_pda,
+        delegation_program_id,
+        system_program_id,
         token_escrow_seeds,
         i64::MAX,
         u32::MAX,

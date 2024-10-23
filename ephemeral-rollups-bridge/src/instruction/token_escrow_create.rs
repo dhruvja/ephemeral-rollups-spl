@@ -12,12 +12,12 @@ pub const DISCRIMINANT: [u8; 8] = [0xfe, 0x25, 0x5a, 0x94, 0x2e, 0x8e, 0x50, 0xa
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
-    index: u64,
+    pub index: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [payer, authority, validator_id, token_mint, token_escrow_pda, system_program] = accounts
+    let [payer, authority, validator, token_mint, token_escrow_pda, system_program_id] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -28,7 +28,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, validator_id.key, token_mint.key, args.index);
+        token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Initialize the escrow PDA
@@ -38,12 +38,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         token_escrow_seeds,
         TokenEscrow::space(),
         program_id,
-        system_program,
+        system_program_id,
     )?;
 
     // Initialize the escrow data
     let token_escrow_data = TokenEscrow {
-        initialized: true,
+        discriminant: TokenEscrow::discriminant(),
         amount: 0,
     };
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
