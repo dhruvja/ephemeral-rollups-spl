@@ -1,6 +1,8 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use spl_token::instruction::transfer;
 
 use crate::state::token_escrow::TokenEscrow;
 use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
@@ -16,7 +18,7 @@ pub struct Args {
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [token_account, authority, validator_id, token_mint, token_escrow_pda, token_vault_pda] =
+    let [destination_account, authority, validator_id, token_mint, token_escrow_pda, token_vault_pda, token_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -41,12 +43,28 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     let token_vault_seeds = token_vault_seeds_generator!(validator_id.key, token_mint.key);
     ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
 
-    // TODO - proceed to transfer from vault to token_account
-
-    // Update the escrow amount
+    // Update the escrow amount (panic if not enough amount available)
     let mut token_escrow_data = TokenEscrow::try_from_slice(&token_escrow_pda.data.borrow())?;
-    token_escrow_data.amount -= args.amount;
+    token_escrow_data.amount = token_escrow_data.amount.checked_sub(args.amount).unwrap();
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+
+    // Proceed to transfer from vault to destination_account (if everything else succeeded)
+    invoke_signed(
+        &transfer(
+            token_program.key,
+            token_vault_pda.key,
+            destination_account.key,
+            token_vault_pda.key,
+            &[],
+            args.amount,
+        )?,
+        &[
+            token_vault_pda.clone(),
+            destination_account.clone(),
+            token_vault_pda.clone(),
+        ],
+        &[token_vault_seeds],
+    )?;
 
     // Done
     Ok(())

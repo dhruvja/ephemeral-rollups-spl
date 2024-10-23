@@ -1,8 +1,8 @@
-use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::program::{invoke, invoke_signed};
+use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::system_program;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use spl_token::instruction::initialize_account3;
 
 use crate::state::token_escrow::TokenEscrow;
 use crate::token_vault_seeds_generator;
@@ -37,17 +37,15 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], _data: &[u8]) -> P
     )?;
 
     // Write the spl token vault's content
-    /*
     invoke(
-        &spl_token::instruction::initialize_account3(
+        &initialize_account3(
             token_program.key,
             token_vault_pda.key,
             token_mint.key,
             token_vault_pda.key,
         )?,
         &[token_vault_pda.clone(), token_vault_pda.clone()],
-    );
-     */
+    )?;
 
     // Done
     Ok(())

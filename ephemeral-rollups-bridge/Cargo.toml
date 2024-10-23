@@ -15,5 +15,5 @@ default = []
 [dependencies]
 solana-program = "1.18.26"
 borsh = "1.5.1"
-spl-token = "5.0.0"
+spl-token = "4.0.0"
 ephemeral-rollups-sdk = "0.0.7"
