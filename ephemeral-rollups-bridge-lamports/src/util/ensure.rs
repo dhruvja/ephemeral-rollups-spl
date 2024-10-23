@@ -10,13 +10,6 @@ pub fn ensure_is_signer(account: &AccountInfo) -> ProgramResult {
     Ok(())
 }
 
-pub fn ensure_is_writable(account: &AccountInfo) -> ProgramResult {
-    if !account.is_writable {
-        return Err(ProgramError::InvalidAccountData);
-    }
-    Ok(())
-}
-
 pub fn ensure_is_owned_by_program(account: &AccountInfo, program_id: &Pubkey) -> ProgramResult {
     if account.owner.ne(program_id) {
         return Err(ProgramError::InvalidAccountOwner);
