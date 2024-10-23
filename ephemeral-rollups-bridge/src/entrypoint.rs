@@ -6,7 +6,7 @@ use solana_program::{
 use crate::instruction::{
     lamport_escrow_claim, lamport_escrow_create, lamport_escrow_delegate,
     lamport_escrow_undelegate, token_escrow_create, token_escrow_delegate, token_escrow_deposit,
-    token_escrow_undelegate, token_escrow_withdraw,
+    token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw,
 };
 
 fn process_instruction(
@@ -48,6 +48,9 @@ fn process_instruction(
         }
         token_escrow_deposit::DISCRIMINANT => {
             token_escrow_deposit::process(program_id, accounts, data)
+        }
+        token_escrow_transfer::DISCRIMINANT => {
+            token_escrow_transfer::process(program_id, accounts, data)
         }
         token_escrow_undelegate::DISCRIMINANT => {
             token_escrow_undelegate::process(program_id, accounts, data)
