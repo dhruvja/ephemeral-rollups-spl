@@ -575,7 +575,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 
 [[package]]
-name = "ephemeral-rollups-escrow-sol"
+name = "ephemeral-rollups-escrow"
 version = "0.0.1"
 dependencies = [
  "borsh 1.5.1",

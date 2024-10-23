@@ -1,12 +1,12 @@
 [package]
-name = "ephemeral-rollups-escrow-tokens"
+name = "ephemeral-rollups-escrow"
 version = "0.0.1"
-description = "Ephemeral Rollups Bridge Tokens"
+description = "Ephemeral Rollups Bridge"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "ephemeral_rollups_bridge_tokens"
+name = "ephemeral_rollups_bridge"
 
 [features]
 no-entrypoint = []
