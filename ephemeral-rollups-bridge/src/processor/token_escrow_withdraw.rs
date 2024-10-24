@@ -1,4 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::msg;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
@@ -32,8 +33,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Verify that the program has proper control of the escrow PDA (and that it's been initialized)
     ensure_is_owned_by_program(token_escrow_pda, program_id)?;
 
-    // Verify that the program has proper control of the vault PDA (and that it's been initialized)
-    ensure_is_owned_by_program(token_vault_pda, program_id)?;
+    // Verify that the vault has been initialized properly
+    ensure_is_owned_by_program(token_vault_pda, token_program_id.key)?;
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
@@ -69,6 +70,18 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         ],
         &[&signer_seeds(token_vault_seeds, &[token_vault_bump])],
     )?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Withdrew from TokenEscrow");
+    msg!(" - authority: {}", authority.key);
+    msg!(" - validator: {}", validator.key);
+    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - index: {}", args.index);
+    msg!(
+        " - destination_token_account: {}",
+        destination_token_account.key
+    );
+    msg!(" - amount: {}", args.amount);
 
     // Done
     Ok(())
