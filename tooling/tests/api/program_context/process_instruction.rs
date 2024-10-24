@@ -10,14 +10,12 @@ async fn process_instruction_result(
     instruction: Instruction,
     result: Result<(), ProgramError>,
 ) -> Result<(), ProgramError> {
-    // Log the result, useful for debugging as STDOUT is displayed when a test fails
     println!(" -------- PROCESSING INSTRUCTION --------");
     println!(
         " - instruction.program_id: {:?}",
         instruction.program_id.to_string()
     );
     println!(" - instruction.data: {:?}", instruction.data);
-    // Log the callers for quickly glace over the flow of IXs using minified backtrace
     let backtrace_data = std::backtrace::Backtrace::force_capture();
     let backtrace_formatted = std::format!("{}", backtrace_data);
     let backtrace_lines = backtrace_formatted.lines();
@@ -27,19 +25,16 @@ async fn process_instruction_result(
             println!(" - instruction.from: {}", backtrace_line.trim());
         }
     }
-    // Log accounts (only visible when the test fails)
     let mut idx = 0;
     for account in instruction.accounts {
         idx += 1;
         println!(" - instruction.account: #{:?} {:?}", idx, account.pubkey);
     }
-    // Print result
     if result.is_ok() {
         println!(" - instruction.result: {:?}", "OK");
     } else {
         println!(" - instruction.result: {:?}", "ERROR");
     }
-    // Done
     result
 }
 

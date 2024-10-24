@@ -6,6 +6,7 @@ use spl_token::instruction::transfer;
 
 use crate::state::token_escrow::TokenEscrow;
 use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::seeds::seeds_signer_for_pda;
 use crate::{token_escrow_seeds_generator, token_vault_seeds_generator};
 
 pub const DISCRIMINANT: [u8; 8] = [0xda, 0xcf, 0x42, 0xdd, 0x24, 0x78, 0x76, 0x44];
@@ -41,7 +42,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the vault PDA
     let token_vault_seeds = token_vault_seeds_generator!(validator.key, token_mint.key);
-    ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
+    let token_vault_bump = ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
 
     // Update the escrow amount (panic if not enough amount available)
     let mut token_escrow_data = TokenEscrow::try_from_slice(&token_escrow_pda.data.borrow())?;
@@ -66,7 +67,10 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
             destination_account.clone(),
             token_vault_pda.clone(),
         ],
-        &[token_vault_seeds],
+        &[&seeds_signer_for_pda(
+            token_vault_seeds,
+            &[token_vault_bump],
+        )],
     )?;
 
     // Done

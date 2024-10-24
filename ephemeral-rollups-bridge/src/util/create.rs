@@ -1,6 +1,5 @@
 use solana_program::{
     account_info::AccountInfo,
-    entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
     pubkey::Pubkey,
@@ -9,14 +8,20 @@ use solana_program::{
     sysvar::Sysvar,
 };
 
+use crate::util::seeds::seeds_signer_for_pda;
+
 pub fn create_pda<'info>(
     payer: &AccountInfo<'info>,
     pda: &AccountInfo<'info>,
     pda_seeds: &[&[u8]],
+    pda_bump: u8,
     data_len: usize,
     owner: &Pubkey,
     system_program: &AccountInfo<'info>,
-) -> ProgramResult {
+) -> Result<(), ProgramError> {
+    // Generate the PDA's signer seeds
+    let pda_bump_slice = &[pda_bump];
+    let pda_signer_seeds = seeds_signer_for_pda(pda_seeds, pda_bump_slice);
     // Transfer sufficient lamports for rent exemption
     let rent_exempt_missing_amount = Rent::get()?
         .minimum_balance(data_len)
@@ -32,13 +37,13 @@ pub fn create_pda<'info>(
     invoke_signed(
         &allocate(pda.key, space),
         &[pda.clone(), system_program.clone()],
-        &[pda_seeds],
+        &[&pda_signer_seeds],
     )?;
     // Assign new program as the owner
     invoke_signed(
         &assign(pda.key, owner),
         &[pda.clone(), system_program.clone()],
-        &[pda_seeds],
+        &[&pda_signer_seeds],
     )?;
     // Done
     Ok(())

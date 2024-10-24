@@ -5,8 +5,8 @@ description = "Ephemeral Rollups Bridge"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib", "lib"]
 name = "ephemeral_rollups_bridge"
+crate-type = ["cdylib", "lib"]
 
 [features]
 no-entrypoint = []
@@ -15,5 +15,5 @@ default = []
 [dependencies]
 solana-program = "1.18.26"
 borsh = "1.5.1"
-spl-token = "4.0.0"
+spl-token = { version = "4.0.0", features = ["no-entrypoint"] }
 ephemeral-rollups-sdk = "0.0.7"

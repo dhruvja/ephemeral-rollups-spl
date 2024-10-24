@@ -1,3 +1,5 @@
+use std::mem::size_of;
+
 use borsh::{BorshDeserialize, BorshSerialize};
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]

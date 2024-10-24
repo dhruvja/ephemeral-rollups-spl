@@ -1,33 +1,43 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use ephemeral_rollups_sdk::cpi::delegate_account;
+use solana_program::msg;
+use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
+use solana_program::rent::Rent;
+use solana_program::system_instruction::transfer;
+use solana_program::sysvar::Sysvar;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
 use crate::lamport_escrow_seeds_generator;
 use crate::state::lamport_escrow::LamportEscrow;
 use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::seeds::seeds_signer_for_pda;
 
-pub const DISCRIMINANT: [u8; 8] = [0x98, 0xe4, 0x41, 0xd1, 0x81, 0xb6, 0xc9, 0x3b];
+pub const DISCRIMINANT: [u8; 8] = [0x62, 0x2b, 0x40, 0xa9, 0xc1, 0xe1, 0x1d, 0x72];
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
     pub index: u64,
+    pub lamports: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [payer, authority, validator, lamport_escrow_pda, delegation_buffer_pda, delegation_record_pda, delegation_metadata_pda, delegation_program_id, owner_program_id, system_program_id] =
-        accounts
-    else {
+    let [authority, validator, lamport_escrow_pda] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
 
+    msg!("HELLO PHASE 1");
+
     // Verify that the authority user is indeed the one initiating this IX
     ensure_is_signer(authority)?;
 
+    msg!("HELLO PHASE 2");
+
     // Verify that the program has proper control of the PDA (and that it's been initialized)
     ensure_is_owned_by_program(lamport_escrow_pda, program_id)?;
+
+    msg!("HELLO PHASE 3");
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
@@ -40,25 +50,22 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Verify that the owner_program_id account passed as parameter is valid
-    if owner_program_id.key.ne(program_id) {
-        return Err(ProgramError::IncorrectProgramId);
+    msg!("HELLO PHASE 4");
+
+    // Verify that the escrow PDA has a sufficient amount of available lamports to claim
+    let minimum_lamports = Rent::get()?.minimum_balance(LamportEscrow::space());
+    let claimable_lamports = lamport_escrow_pda
+        .lamports()
+        .saturating_sub(minimum_lamports);
+    if args.lamports > claimable_lamports {
+        return Err(ProgramError::InsufficientFunds);
     }
 
-    // Delegate the escrow, relinquish control on chain (it will become claimable in the Ephem)
-    delegate_account(
-        payer,
-        lamport_escrow_pda,
-        owner_program_id,
-        delegation_buffer_pda,
-        delegation_record_pda,
-        delegation_metadata_pda,
-        delegation_program_id,
-        system_program_id,
-        lamport_escrow_seeds,
-        i64::MAX,
-        u32::MAX,
-    )?;
+    msg!("HELLO PHASE 5");
+
+    // Send the lamports to the authority account
+    **lamport_escrow_pda.try_borrow_mut_lamports()? -= args.lamports;
+    **authority.try_borrow_mut_lamports()? += args.lamports;
 
     // Done
     Ok(())

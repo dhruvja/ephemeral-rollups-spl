@@ -1,51 +1,38 @@
-use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::program_error::ProgramError;
-use solana_program::system_program;
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use borsh::BorshSerialize;
+use solana_program::{
+    instruction::{AccountMeta, Instruction},
+    pubkey::Pubkey,
+    system_program,
+};
 
-use crate::lamport_escrow_seeds_generator;
-use crate::state::lamport_escrow::LamportEscrow;
-use crate::util::create::create_pda;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda};
+use crate::{processor::lamport_escrow_create, state::lamport_escrow::LamportEscrow};
 
-pub const DISCRIMINANT: [u8; 8] = [0x1a, 0x92, 0xb7, 0x8b, 0x57, 0xad, 0x99, 0x02];
+pub fn instruction(
+    payer: &Pubkey,
+    authority: &Pubkey,
+    validator: &Pubkey,
+    index: u64,
+) -> Instruction {
+    let program_id = crate::id();
+    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, index, &program_id);
 
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
-pub struct Args {
-    pub index: u64,
-}
+    let accounts = vec![
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(*authority, false),
+        AccountMeta::new_readonly(*validator, false),
+        AccountMeta::new(lamport_escrow_pda, false),
+        AccountMeta::new_readonly(system_program::id(), false),
+    ];
 
-pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    // Read instruction inputs
-    let [payer, authority, validator, lamport_escrow_pda, system_program_id] = accounts else {
-        return Err(ProgramError::NotEnoughAccountKeys);
-    };
-    let args = Args::try_from_slice(data)?;
+    let mut data = Vec::new();
+    data.extend_from_slice(&lamport_escrow_create::DISCRIMINANT);
+    lamport_escrow_create::Args { index }
+        .serialize(&mut data)
+        .unwrap();
 
-    // Verify that the escrow PDA is currently un-initialized
-    ensure_is_owned_by_program(lamport_escrow_pda, &system_program::ID)?;
-
-    // Verify the seeds of the escrow PDA
-    let lamport_escrow_seeds =
-        lamport_escrow_seeds_generator!(authority.key, validator.key, args.index);
-    ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
-
-    // Initialize the escrow PDA
-    create_pda(
-        payer,
-        lamport_escrow_pda,
-        lamport_escrow_seeds,
-        LamportEscrow::space(),
+    Instruction {
         program_id,
-        system_program_id,
-    )?;
-
-    // Initialize the escrow data
-    let lamport_escrow_data = LamportEscrow {
-        discriminant: LamportEscrow::discriminant(),
-    };
-    lamport_escrow_data.serialize(&mut &mut lamport_escrow_pda.try_borrow_mut_data()?.as_mut())?;
-
-    // Done
-    Ok(())
+        accounts,
+        data,
+    }
 }

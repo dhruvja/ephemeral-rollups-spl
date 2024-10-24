@@ -1,9 +1,17 @@
+use solana_sdk::account::Account;
 use solana_sdk::program_pack::IsInitialized;
 use solana_sdk::program_pack::Pack;
 use solana_sdk::pubkey::Pubkey;
 
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
+
+pub async fn read_account(
+    program_context: &mut Box<dyn ProgramContext>,
+    address: &Pubkey,
+) -> Result<Option<Account>, ProgramError> {
+    Ok(program_context.get_account(address).await?)
+}
 
 pub async fn read_account_exists(
     program_context: &mut Box<dyn ProgramContext>,

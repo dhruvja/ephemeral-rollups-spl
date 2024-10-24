@@ -1,22 +1,20 @@
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-
-use ephemeral_rollups_bridge::instruction::lamport_escrow_create;
+use solana_sdk::system_instruction::transfer;
 
 use crate::api::program_context::process_instruction::process_instruction_with_signer;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 
-pub async fn process_lamport_escrow_create(
+pub async fn process_system_transfer(
     program_context: &mut Box<dyn ProgramContext>,
     payer: &Keypair,
-    authority: &Pubkey,
-    validator: &Pubkey,
-    index: u64,
+    source: &Keypair,
+    destination: &Pubkey,
+    lamports: u64,
 ) -> Result<(), ProgramError> {
-    let instruction =
-        lamport_escrow_create::instruction(&payer.pubkey(), authority, validator, index);
+    let instruction = transfer(&source.pubkey(), destination, lamports);
 
-    process_instruction_with_signer(program_context, instruction, payer, payer).await
+    process_instruction_with_signer(program_context, instruction, payer, source).await
 }

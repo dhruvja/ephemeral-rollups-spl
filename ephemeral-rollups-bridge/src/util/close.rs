@@ -1,33 +1,39 @@
 use solana_program::{
     account_info::AccountInfo,
-    entrypoint::ProgramResult,
     program::invoke_signed,
+    program_error::ProgramError,
     system_instruction::{allocate, assign, transfer},
 };
+
+use crate::util::seeds::seeds_signer_for_pda;
 
 pub fn close_pda<'info>(
     pda: &AccountInfo<'info>,
     pda_seeds: &[&[u8]],
+    pda_bump: u8,
     spill: &AccountInfo<'info>,
     system_program: &AccountInfo<'info>,
-) -> ProgramResult {
+) -> Result<(), ProgramError> {
+    // Generate the PDA's signer seeds
+    let pda_bump_slice = &[pda_bump];
+    let pda_signer_seeds = seeds_signer_for_pda(pda_seeds, pda_bump_slice);
     // Dealloc all data
     invoke_signed(
         &allocate(pda.key, 0),
         &[pda.clone(), system_program.clone()],
-        &[pda_seeds],
+        &[&pda_signer_seeds],
     )?;
     // Siphon all lamports
     invoke_signed(
         &transfer(pda.key, spill.key, pda.lamports()),
         &[pda.clone(), spill.clone(), system_program.clone()],
-        &[pda_seeds],
+        &[&pda_signer_seeds],
     )?;
     // Reassign to system program
     invoke_signed(
         &assign(pda.key, system_program.key),
         &[pda.clone(), system_program.clone()],
-        &[pda_seeds],
+        &[&pda_signer_seeds],
     )?;
     // Done
     Ok(())

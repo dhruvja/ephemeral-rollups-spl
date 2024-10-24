@@ -3,7 +3,7 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::instruction::{
+use crate::processor::{
     lamport_escrow_claim, lamport_escrow_create, lamport_escrow_delegate,
     lamport_escrow_undelegate, token_escrow_create, token_escrow_delegate, token_escrow_deposit,
     token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw,
