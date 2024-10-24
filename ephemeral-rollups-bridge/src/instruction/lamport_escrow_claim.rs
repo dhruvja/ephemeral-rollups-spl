@@ -19,15 +19,18 @@ pub fn instruction(
     let accounts = vec![
         AccountMeta::new_readonly(*authority, true),
         AccountMeta::new(*destination, false),
-        AccountMeta::new_readonly(*validator, false),
         AccountMeta::new(lamport_escrow_pda, false),
     ];
 
     let mut data = Vec::new();
     data.extend_from_slice(&lamport_escrow_claim::DISCRIMINANT);
-    lamport_escrow_claim::Args { index, lamports }
-        .serialize(&mut data)
-        .unwrap();
+    lamport_escrow_claim::Args {
+        validator: *validator,
+        index,
+        lamports,
+    }
+    .serialize(&mut data)
+    .unwrap();
 
     Instruction {
         program_id,

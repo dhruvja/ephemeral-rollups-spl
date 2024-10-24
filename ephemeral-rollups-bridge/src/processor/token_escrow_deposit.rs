@@ -13,13 +13,16 @@ pub const DISCRIMINANT: [u8; 8] = [0xe0, 0x6c, 0xbe, 0x01, 0x34, 0xe4, 0x4b, 0xf
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
+    pub authority: Pubkey,
+    pub validator: Pubkey,
+    pub token_mint: Pubkey,
     pub index: u64,
     pub amount: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [source_authority, source_token_account, authority, validator, token_mint, token_escrow_pda, token_vault_pda, token_program_id] =
+    let [source_authority, source_token_account, token_escrow_pda, token_vault_pda, token_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -34,11 +37,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
+        token_escrow_seeds_generator!(args.authority, args.validator, args.token_mint, args.index);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Verify the seeds of the vault PDA
-    let token_vault_seeds = token_vault_seeds_generator!(validator.key, token_mint.key);
+    let token_vault_seeds = token_vault_seeds_generator!(args.validator, args.token_mint);
     ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
 
     // Proceed to transfer the token amount from source_token_account to vault
@@ -68,9 +71,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Deposited to TokenEscrow");
-    msg!(" - authority: {}", authority.key);
-    msg!(" - validator: {}", validator.key);
-    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - authority: {}", args.authority);
+    msg!(" - validator: {}", args.validator);
+    msg!(" - token_mint: {}", args.token_mint);
     msg!(" - index: {}", args.index);
     msg!(" - amount: {}", args.amount);
 

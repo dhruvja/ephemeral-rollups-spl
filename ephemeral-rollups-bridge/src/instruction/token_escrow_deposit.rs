@@ -26,9 +26,6 @@ pub fn instruction(
     let accounts = vec![
         AccountMeta::new_readonly(*source_authority, true),
         AccountMeta::new(*source_token_account, false),
-        AccountMeta::new_readonly(*authority, false),
-        AccountMeta::new_readonly(*validator, false),
-        AccountMeta::new_readonly(*token_mint, false),
         AccountMeta::new(token_escrow_pda, false),
         AccountMeta::new(token_vault_pda, false),
         AccountMeta::new_readonly(spl_token::id(), false),
@@ -36,9 +33,15 @@ pub fn instruction(
 
     let mut data = Vec::new();
     data.extend_from_slice(&token_escrow_deposit::DISCRIMINANT);
-    token_escrow_deposit::Args { index, amount }
-        .serialize(&mut data)
-        .unwrap();
+    token_escrow_deposit::Args {
+        authority: *authority,
+        validator: *validator,
+        token_mint: *token_mint,
+        index,
+        amount,
+    }
+    .serialize(&mut data)
+    .unwrap();
 
     Instruction {
         program_id,

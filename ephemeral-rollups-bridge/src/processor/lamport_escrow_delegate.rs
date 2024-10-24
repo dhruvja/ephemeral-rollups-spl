@@ -11,12 +11,13 @@ pub const DISCRIMINANT: [u8; 8] = [0x98, 0xe4, 0x41, 0xd1, 0x81, 0xb6, 0xc9, 0x3
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
+    pub validator: Pubkey,
     pub index: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [payer, authority, validator, lamport_escrow_pda, delegation_buffer_pda, delegation_record_pda, delegation_metadata_pda, delegation_program_id, owner_program_id, system_program_id] =
+    let [payer, authority, lamport_escrow_pda, delegation_buffer_pda, delegation_record_pda, delegation_metadata_pda, delegation_program_id, owner_program_id, system_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -34,7 +35,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
-        lamport_escrow_seeds_generator!(authority.key, validator.key, args.index);
+        lamport_escrow_seeds_generator!(authority.key, args.validator, args.index);
     ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized

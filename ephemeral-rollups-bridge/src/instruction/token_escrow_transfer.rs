@@ -34,9 +34,6 @@ pub fn instruction(
 
     let accounts = vec![
         AccountMeta::new_readonly(*source_authority, true),
-        AccountMeta::new_readonly(*destination_authority, false),
-        AccountMeta::new_readonly(*validator, false),
-        AccountMeta::new_readonly(*token_mint, false),
         AccountMeta::new(source_token_escrow_pda, false),
         AccountMeta::new(destination_token_escrow_pda, false),
     ];
@@ -44,6 +41,9 @@ pub fn instruction(
     let mut data = Vec::new();
     data.extend_from_slice(&token_escrow_transfer::DISCRIMINANT);
     token_escrow_transfer::Args {
+        validator: *validator,
+        token_mint: *token_mint,
+        destination_authority: *destination_authority,
         source_index,
         destination_index,
         amount,
