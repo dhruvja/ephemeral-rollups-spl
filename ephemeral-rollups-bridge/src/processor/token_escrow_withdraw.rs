@@ -19,7 +19,7 @@ pub struct Args {
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [destination_token_account, authority, validator, token_mint, token_escrow_pda, token_vault_pda, token_program_id] =
+    let [authority, destination_token_account, validator, token_mint, token_escrow_pda, token_vault_pda, token_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -52,7 +52,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     token_escrow_data.amount = token_escrow_data.amount.checked_sub(args.amount).unwrap();
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
 
-    // Proceed to transfer from vault to destination_token_account (if everything else succeeded)
+    // Proceed to transfer from token_vault_pda to destination_token_account (if everything else succeeded)
     invoke_signed(
         &transfer(
             token_program_id.key,

@@ -26,26 +26,30 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     };
     let args = Args::try_from_slice(data)?;
 
-    msg!("FAIL0");
+    msg!("HELLO 1");
 
     // Verify that the program has proper control of the escrow PDA (and that it's been initialized)
     ensure_is_owned_by_program(token_escrow_pda, program_id)?;
 
-    // Verify that the program has proper control of the vault PDA (and that it's been initialized)
-    ensure_is_owned_by_program(token_vault_pda, program_id)?;
+    msg!("HELLO 1");
 
-    msg!("FAIL1");
+    // Verify that the program has proper control of the vault PDA (and that it's been initialized)
+    ensure_is_owned_by_program(token_vault_pda, token_program_id.key)?;
+
+    msg!("HELLO 3");
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
         token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
+    msg!("HELLO 1");
+
     // Verify the seeds of the vault PDA
     let token_vault_seeds = token_vault_seeds_generator!(validator.key, token_mint.key);
     ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
 
-    msg!("FAIL2");
+    msg!("HELLO 1");
 
     // Proceed to transfer the token amount from source_token_account to vault
     invoke(

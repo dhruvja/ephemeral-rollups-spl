@@ -1,5 +1,5 @@
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
@@ -18,20 +18,15 @@ fn process_instruction(
         return Err(ProgramError::IncorrectProgramId);
     }
 
-    msg!("BEFORE IX");
-
     if data.len() < 8 {
         return Err(ProgramError::InvalidInstructionData);
     }
-
-    msg!("BEFORE IX 2");
 
     let (tag, data) = data.split_at(8);
     let tag_array: [u8; 8] = tag
         .try_into()
         .map_err(|_| ProgramError::InvalidInstructionData)?;
 
-    msg!("BEFORE IX 3");
     match tag_array {
         lamport_escrow_create::DISCRIMINANT => {
             lamport_escrow_create::process(program_id, accounts, data)

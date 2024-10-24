@@ -5,28 +5,27 @@ use solana_program::{
 };
 
 use crate::{
-    processor::token_escrow_deposit,
+    processor::token_escrow_withdraw,
     state::{token_escrow::TokenEscrow, token_vault::token_vault_generate_pda},
 };
 
 pub fn instruction(
-    source_authority: &Pubkey,
-    source_token_account: &Pubkey,
     authority: &Pubkey,
+    destination_token_account: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
     index: u64,
     amount: u64,
 ) -> Instruction {
     let program_id = crate::id();
+
     let token_escrow_pda =
         TokenEscrow::generate_pda(authority, validator, token_mint, index, &program_id);
     let token_vault_pda = token_vault_generate_pda(validator, token_mint, &program_id);
 
     let accounts = vec![
-        AccountMeta::new_readonly(*source_authority, true),
-        AccountMeta::new(*source_token_account, false),
-        AccountMeta::new_readonly(*authority, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*destination_token_account, false),
         AccountMeta::new_readonly(*validator, false),
         AccountMeta::new_readonly(*token_mint, false),
         AccountMeta::new(token_escrow_pda, false),
@@ -35,8 +34,8 @@ pub fn instruction(
     ];
 
     let mut data = Vec::new();
-    data.extend_from_slice(&token_escrow_deposit::DISCRIMINANT);
-    token_escrow_deposit::Args { index, amount }
+    data.extend_from_slice(&token_escrow_withdraw::DISCRIMINANT);
+    token_escrow_withdraw::Args { index, amount }
         .serialize(&mut data)
         .unwrap();
 

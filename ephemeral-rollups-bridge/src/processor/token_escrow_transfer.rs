@@ -1,4 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
@@ -84,6 +85,16 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         .unwrap();
     destination_token_escrow_data
         .serialize(&mut &mut destination_token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Transfered between TokenEscrow");
+    msg!(" - source_authority: {}", source_authority.key);
+    msg!(" - destination_authority: {}", destination_authority.key);
+    msg!(" - validator: {}", validator.key);
+    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - source_index: {}", args.source_index);
+    msg!(" - destination_index: {}", args.destination_index);
+    msg!(" - amount: {}", args.amount);
 
     // Done
     Ok(())
