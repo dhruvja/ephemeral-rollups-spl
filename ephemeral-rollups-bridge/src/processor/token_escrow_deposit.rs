@@ -1,4 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::msg;
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
@@ -18,18 +19,22 @@ pub struct Args {
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [source_authority, source_account, authority, validator, token_mint, token_escrow_pda, token_vault_pda, token_program] =
+    let [source_authority, source_token_account, authority, validator, token_mint, token_escrow_pda, token_vault_pda, token_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
 
+    msg!("FAIL0");
+
     // Verify that the program has proper control of the escrow PDA (and that it's been initialized)
     ensure_is_owned_by_program(token_escrow_pda, program_id)?;
 
     // Verify that the program has proper control of the vault PDA (and that it's been initialized)
     ensure_is_owned_by_program(token_vault_pda, program_id)?;
+
+    msg!("FAIL1");
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
@@ -40,18 +45,20 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     let token_vault_seeds = token_vault_seeds_generator!(validator.key, token_mint.key);
     ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
 
-    // Proceed to transfer the token amount from source_account to vault
+    msg!("FAIL2");
+
+    // Proceed to transfer the token amount from source_token_account to vault
     invoke(
         &transfer(
-            token_program.key,
-            source_account.key,
+            token_program_id.key,
+            source_token_account.key,
             token_vault_pda.key,
             source_authority.key,
             &[],
             args.amount,
         )?,
         &[
-            source_account.clone(),
+            source_token_account.clone(),
             token_vault_pda.clone(),
             source_authority.clone(),
         ],
@@ -64,6 +71,14 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     }
     token_escrow_data.amount = token_escrow_data.amount.checked_add(args.amount).unwrap();
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Deposited to TokenEscrow");
+    msg!(" - authority: {}", authority.key);
+    msg!(" - validator: {}", validator.key);
+    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - index: {}", args.index);
+    msg!(" - amount: {}", args.amount);
 
     // Done
     Ok(())

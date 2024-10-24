@@ -8,7 +8,7 @@ use solana_program::{
     sysvar::Sysvar,
 };
 
-use crate::util::seeds::seeds_signer_for_pda;
+use crate::util::signer::signer_seeds;
 
 pub fn create_pda<'info>(
     payer: &AccountInfo<'info>,
@@ -21,7 +21,7 @@ pub fn create_pda<'info>(
 ) -> Result<(), ProgramError> {
     // Generate the PDA's signer seeds
     let pda_bump_slice = &[pda_bump];
-    let pda_signer_seeds = seeds_signer_for_pda(pda_seeds, pda_bump_slice);
+    let pda_signer_seeds = signer_seeds(pda_seeds, pda_bump_slice);
     // Transfer sufficient lamports for rent exemption
     let rent_exempt_missing_amount = Rent::get()?
         .minimum_balance(data_len)

@@ -1,16 +1,13 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::msg;
-use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::rent::Rent;
-use solana_program::system_instruction::transfer;
 use solana_program::sysvar::Sysvar;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
 use crate::lamport_escrow_seeds_generator;
 use crate::state::lamport_escrow::LamportEscrow;
 use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
-use crate::util::seeds::seeds_signer_for_pda;
 
 pub const DISCRIMINANT: [u8; 8] = [0x62, 0x2b, 0x40, 0xa9, 0xc1, 0xe1, 0x1d, 0x72];
 
@@ -22,22 +19,16 @@ pub struct Args {
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [authority, validator, lamport_escrow_pda] = accounts else {
+    let [authority, destination, validator, lamport_escrow_pda] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
 
-    msg!("HELLO PHASE 1");
-
     // Verify that the authority user is indeed the one initiating this IX
     ensure_is_signer(authority)?;
 
-    msg!("HELLO PHASE 2");
-
     // Verify that the program has proper control of the PDA (and that it's been initialized)
     ensure_is_owned_by_program(lamport_escrow_pda, program_id)?;
-
-    msg!("HELLO PHASE 3");
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
@@ -50,8 +41,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::InvalidAccountData);
     }
 
-    msg!("HELLO PHASE 4");
-
     // Verify that the escrow PDA has a sufficient amount of available lamports to claim
     let minimum_lamports = Rent::get()?.minimum_balance(LamportEscrow::space());
     let claimable_lamports = lamport_escrow_pda
@@ -61,11 +50,17 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::InsufficientFunds);
     }
 
-    msg!("HELLO PHASE 5");
-
     // Send the lamports to the authority account
     **lamport_escrow_pda.try_borrow_mut_lamports()? -= args.lamports;
-    **authority.try_borrow_mut_lamports()? += args.lamports;
+    **destination.try_borrow_mut_lamports()? += args.lamports;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Claimed from LamportEscrow");
+    msg!(" - authority: {}", authority.key);
+    msg!(" - validator: {}", validator.key);
+    msg!(" - index: {}", args.index);
+    msg!(" - destination: {}", destination.key);
+    msg!(" - lamports: {}", args.lamports);
 
     // Done
     Ok(())

@@ -8,6 +8,7 @@ use crate::{processor::lamport_escrow_claim, state::lamport_escrow::LamportEscro
 
 pub fn instruction(
     authority: &Pubkey,
+    destination: &Pubkey,
     validator: &Pubkey,
     index: u64,
     lamports: u64,
@@ -16,7 +17,8 @@ pub fn instruction(
     let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, index, &program_id);
 
     let accounts = vec![
-        AccountMeta::new(*authority, true),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*destination, false),
         AccountMeta::new_readonly(*validator, false),
         AccountMeta::new(lamport_escrow_pda, false),
     ];

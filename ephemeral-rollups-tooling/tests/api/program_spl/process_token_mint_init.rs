@@ -20,17 +20,15 @@ pub async fn process_token_mint_init(
     authority: &Pubkey,
 ) -> Result<(), ProgramError> {
     let rent_space = Mint::LEN;
-    let rent_minimum_balance = program_context.get_rent_minimum_balance(rent_space).await?;
-
+    let rent_minimum_lamports = program_context.get_rent_minimum_balance(rent_space).await?;
     let instruction_create = create_account(
         &payer.pubkey(),
         &mint.pubkey(),
-        rent_minimum_balance,
+        rent_minimum_lamports,
         rent_space as u64,
         &spl_token::id(),
     );
     process_instruction_with_signer(program_context, instruction_create, payer, mint).await?;
-
     let instruction_init = initialize_mint(
         &spl_token::id(),
         &mint.pubkey(),
@@ -39,8 +37,6 @@ pub async fn process_token_mint_init(
         decimals,
     )
     .map_err(ProgramError::Program)?;
-
     process_instruction(program_context, instruction_init, payer).await?;
-
     Ok(())
 }

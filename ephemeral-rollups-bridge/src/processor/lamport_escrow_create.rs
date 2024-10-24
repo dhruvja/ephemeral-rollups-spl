@@ -1,7 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::program_error::ProgramError;
-use solana_program::system_program;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use solana_program::{msg, system_program};
 
 use crate::lamport_escrow_seeds_generator;
 use crate::state::lamport_escrow::LamportEscrow;
@@ -49,6 +49,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         discriminant: LamportEscrow::discriminant(),
     };
     lamport_escrow_data.serialize(&mut &mut lamport_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Created a new LamportEscrow");
+    msg!(" - authority: {}", authority.key);
+    msg!(" - validator: {}", validator.key);
+    msg!(" - index: {}", args.index);
 
     // Done
     Ok(())

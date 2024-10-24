@@ -5,7 +5,7 @@ use solana_program::{
     system_instruction::{allocate, assign, transfer},
 };
 
-use crate::util::seeds::seeds_signer_for_pda;
+use crate::util::signer::signer_seeds;
 
 pub fn close_pda<'info>(
     pda: &AccountInfo<'info>,
@@ -16,7 +16,7 @@ pub fn close_pda<'info>(
 ) -> Result<(), ProgramError> {
     // Generate the PDA's signer seeds
     let pda_bump_slice = &[pda_bump];
-    let pda_signer_seeds = seeds_signer_for_pda(pda_seeds, pda_bump_slice);
+    let pda_signer_seeds = signer_seeds(pda_seeds, pda_bump_slice);
     // Dealloc all data
     invoke_signed(
         &allocate(pda.key, 0),

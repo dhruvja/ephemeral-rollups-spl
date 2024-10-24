@@ -1,7 +1,7 @@
 use solana_program::program::invoke;
 use solana_program::program_error::ProgramError;
-use solana_program::system_program;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use solana_program::{msg, system_program};
 use spl_token::instruction::initialize_account3;
 
 use crate::state::token_escrow::TokenEscrow;
@@ -13,20 +13,29 @@ pub const DISCRIMINANT: [u8; 8] = [0x70, 0xfe, 0x66, 0x40, 0x47, 0x49, 0x16, 0x0
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], _data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [payer, validator, token_mint, token_vault_pda, token_program, system_program] = accounts
+    let [payer, validator, token_mint, token_vault_pda, token_program_id, system_program_id] =
+        accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
+    msg!("STAGE1");
+
     // Verify that the payer is allowed to pay for the rent fees
     ensure_is_signer(payer)?;
+
+    msg!("STAGE1");
 
     // Verify that the vault PDA is currently un-initialized
     ensure_is_owned_by_program(token_vault_pda, &system_program::ID)?;
 
+    msg!("STAGE1");
+
     // Verify the seeds of the vault PDA
     let token_vault_seeds = token_vault_seeds_generator!(validator.key, token_mint.key);
     let token_vault_bump = ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
+
+    msg!("STAGE1");
 
     // Initialize the vault PDA
     create_pda(
@@ -35,20 +44,27 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], _data: &[u8]) -> P
         token_vault_seeds,
         token_vault_bump,
         TokenEscrow::space(),
-        token_program.key,
-        system_program,
+        token_program_id.key,
+        system_program_id,
     )?;
+
+    msg!("STAGE4");
 
     // Write the spl token vault's content
     invoke(
         &initialize_account3(
-            token_program.key,
+            token_program_id.key,
             token_vault_pda.key,
             token_mint.key,
             token_vault_pda.key,
         )?,
         &[token_vault_pda.clone(), token_vault_pda.clone()],
     )?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Created a new vault for token mint");
+    msg!(" - validator: {}", validator.key);
+    msg!(" - token_mint: {}", token_mint.key);
 
     // Done
     Ok(())

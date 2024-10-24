@@ -1,6 +1,9 @@
 use std::mem::size_of;
 
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::pubkey::Pubkey;
+
+use crate::token_escrow_seeds_generator;
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct TokenEscrow {
@@ -15,6 +18,20 @@ impl TokenEscrow {
 
     pub fn space() -> usize {
         size_of::<u64>() + size_of::<u64>()
+    }
+
+    pub fn generate_pda(
+        authority: &Pubkey,
+        validator: &Pubkey,
+        token_mint: &Pubkey,
+        index: u64,
+        program_id: &Pubkey,
+    ) -> Pubkey {
+        Pubkey::find_program_address(
+            token_escrow_seeds_generator!(authority, validator, token_mint, index),
+            program_id,
+        )
+        .0
     }
 }
 

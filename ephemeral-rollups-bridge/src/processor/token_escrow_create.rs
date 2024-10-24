@@ -1,7 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::program_error::ProgramError;
-use solana_program::system_program;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use solana_program::{msg, system_program};
 
 use crate::state::token_escrow::TokenEscrow;
 use crate::token_escrow_seeds_generator;
@@ -51,6 +51,13 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         amount: 0,
     };
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Created a new TokenEscrow");
+    msg!(" - authority: {}", authority.key);
+    msg!(" - validator: {}", validator.key);
+    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - index: {}", args.index);
 
     // Done
     Ok(())

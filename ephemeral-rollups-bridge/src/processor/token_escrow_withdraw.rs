@@ -6,7 +6,7 @@ use spl_token::instruction::transfer;
 
 use crate::state::token_escrow::TokenEscrow;
 use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
-use crate::util::seeds::seeds_signer_for_pda;
+use crate::util::signer::signer_seeds;
 use crate::{token_escrow_seeds_generator, token_vault_seeds_generator};
 
 pub const DISCRIMINANT: [u8; 8] = [0xda, 0xcf, 0x42, 0xdd, 0x24, 0x78, 0x76, 0x44];
@@ -19,7 +19,7 @@ pub struct Args {
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [destination_account, authority, validator, token_mint, token_escrow_pda, token_vault_pda, token_program] =
+    let [destination_token_account, authority, validator, token_mint, token_escrow_pda, token_vault_pda, token_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -52,25 +52,22 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     token_escrow_data.amount = token_escrow_data.amount.checked_sub(args.amount).unwrap();
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
 
-    // Proceed to transfer from vault to destination_account (if everything else succeeded)
+    // Proceed to transfer from vault to destination_token_account (if everything else succeeded)
     invoke_signed(
         &transfer(
-            token_program.key,
+            token_program_id.key,
             token_vault_pda.key,
-            destination_account.key,
+            destination_token_account.key,
             token_vault_pda.key,
             &[],
             args.amount,
         )?,
         &[
             token_vault_pda.clone(),
-            destination_account.clone(),
+            destination_token_account.clone(),
             token_vault_pda.clone(),
         ],
-        &[&seeds_signer_for_pda(
-            token_vault_seeds,
-            &[token_vault_bump],
-        )],
+        &[&signer_seeds(token_vault_seeds, &[token_vault_bump])],
     )?;
 
     // Done

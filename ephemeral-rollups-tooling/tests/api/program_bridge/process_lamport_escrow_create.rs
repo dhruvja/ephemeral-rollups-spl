@@ -17,6 +17,5 @@ pub async fn process_lamport_escrow_create(
 ) -> Result<(), ProgramError> {
     let instruction =
         lamport_escrow_create::instruction(&payer.pubkey(), authority, validator, index);
-
     process_instruction_with_signer(program_context, instruction, payer, payer).await
 }

@@ -1,12 +1,12 @@
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
 use crate::processor::{
     lamport_escrow_claim, lamport_escrow_create, lamport_escrow_delegate,
     lamport_escrow_undelegate, token_escrow_create, token_escrow_delegate, token_escrow_deposit,
-    token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw,
+    token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw, token_vault_init,
 };
 
 fn process_instruction(
@@ -18,15 +18,20 @@ fn process_instruction(
         return Err(ProgramError::IncorrectProgramId);
     }
 
+    msg!("BEFORE IX");
+
     if data.len() < 8 {
         return Err(ProgramError::InvalidInstructionData);
     }
+
+    msg!("BEFORE IX 2");
 
     let (tag, data) = data.split_at(8);
     let tag_array: [u8; 8] = tag
         .try_into()
         .map_err(|_| ProgramError::InvalidInstructionData)?;
 
+    msg!("BEFORE IX 3");
     match tag_array {
         lamport_escrow_create::DISCRIMINANT => {
             lamport_escrow_create::process(program_id, accounts, data)
@@ -58,6 +63,7 @@ fn process_instruction(
         token_escrow_withdraw::DISCRIMINANT => {
             token_escrow_withdraw::process(program_id, accounts, data)
         }
+        token_vault_init::DISCRIMINANT => token_vault_init::process(program_id, accounts, data),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }

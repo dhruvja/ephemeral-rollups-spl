@@ -20,6 +20,17 @@ pub async fn read_account_exists(
     Ok(program_context.get_account(address).await?.is_some())
 }
 
+pub async fn read_account_lamports(
+    program_context: &mut Box<dyn ProgramContext>,
+    address: &Pubkey,
+) -> Result<u64, ProgramError> {
+    Ok(program_context
+        .get_account(address)
+        .await?
+        .map(|account| account.lamports)
+        .unwrap_or(0))
+}
+
 pub async fn read_account_data(
     program_context: &mut Box<dyn ProgramContext>,
     address: &Pubkey,
