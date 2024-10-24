@@ -23,7 +23,13 @@ async fn test_localnet_token_escrowing() -> Result<(), ProgramError> {
     let validator = Pubkey::new_unique();
 
     let payer = Keypair::new();
-    let authority = Keypair::new();
+
+    let authority1 = Keypair::new();
+    let authority2 = Keypair::new();
+
+    let index1 = 99;
+    let index2 = 42;
+
     let source = Keypair::new();
     let destination = Keypair::new();
 
@@ -74,10 +80,10 @@ async fn test_localnet_token_escrowing() -> Result<(), ProgramError> {
     process_token_escrow_create(
         &mut program_context,
         &payer,
-        &authority.pubkey(),
+        &authority1.pubkey(),
         &validator,
         &usdc_mint.pubkey(),
-        42,
+        index1,
     )
     .await?;
 
@@ -87,79 +93,82 @@ async fn test_localnet_token_escrowing() -> Result<(), ProgramError> {
         &payer,
         &source,
         &source_usdc,
-        &authority.pubkey(),
+        &authority1.pubkey(),
         &validator,
         &usdc_mint.pubkey(),
-        42,
+        index1,
         10_000_000,
     )
     .await?;
 
+    // Fund the escrow some more
     process_token_escrow_deposit(
         &mut program_context,
         &payer,
         &source,
         &source_usdc,
-        &authority.pubkey(),
+        &authority1.pubkey(),
         &validator,
         &usdc_mint.pubkey(),
-        42,
+        index1,
         90_000_000,
     )
     .await?;
 
-    // Create a different escrow
+    // Create a different escrow (but this one is unfunded)
     process_token_escrow_create(
         &mut program_context,
         &payer,
-        &authority.pubkey(),
+        &authority2.pubkey(),
         &validator,
         &usdc_mint.pubkey(),
-        41,
+        index2,
     )
     .await?;
 
-    // Do a bunch of transfers between escrows
-
+    // Transfer some from 1->2
     process_token_escrow_transfer(
         &mut program_context,
         &payer,
-        &authority,
-        &authority.pubkey(),
+        &authority1,
+        &authority2.pubkey(),
         &validator,
         &usdc_mint.pubkey(),
-        42,
-        41,
+        index1,
+        index2,
         1_000_000,
     )
     .await?;
 
+    // Transfer all remaining from 1->2
     process_token_escrow_transfer(
         &mut program_context,
         &payer,
-        &authority,
-        &authority.pubkey(),
+        &authority1,
+        &authority2.pubkey(),
         &validator,
         &usdc_mint.pubkey(),
-        42,
-        41,
-        49_000_000,
+        index1,
+        index2,
+        99_000_000,
     )
     .await?;
 
+    // Transfer back most of it back 2->1
     process_token_escrow_transfer(
         &mut program_context,
         &payer,
-        &authority,
-        &authority.pubkey(),
+        &authority2,
+        &authority1.pubkey(),
         &validator,
         &usdc_mint.pubkey(),
-        41,
-        42,
-        25_000_000,
+        index2,
+        index1,
+        75_000_000,
     )
     .await?;
 
+    // Withdraw everything after that
     let destination_usdc = process_associated_token_account_get_or_init(
         &mut program_context,
         &payer,
@@ -168,26 +177,28 @@ async fn test_localnet_token_escrowing() -> Result<(), ProgramError> {
     )
     .await?;
 
+    // There should be most of it in the first escrow
     process_token_escrow_withdraw(
         &mut program_context,
         &payer,
-        &authority,
+        &authority1,
         &destination_usdc,
         &validator,
         &usdc_mint.pubkey(),
-        42,
+        index1,
         75_000_000,
     )
     .await?;
 
+    // And there should be exactly the remaining amount in the other one
     process_token_escrow_withdraw(
         &mut program_context,
         &payer,
-        &authority,
+        &authority2,
         &destination_usdc,
         &validator,
         &usdc_mint.pubkey(),
-        41,
+        index2,
         25_000_000,
     )
     .await?;
