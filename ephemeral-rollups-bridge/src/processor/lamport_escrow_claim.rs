@@ -61,7 +61,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!(" - validator: {}", args.validator);
     msg!(" - index: {}", args.index);
     msg!(" - destination: {}", destination.key);
-    msg!(" - lamports: {}", args.lamports);
+    msg!(
+        " - lamports: {} (remaining: {})",
+        args.lamports,
+        claimable_lamports.saturating_sub(args.lamports)
+    );
 
     // Done
     Ok(())

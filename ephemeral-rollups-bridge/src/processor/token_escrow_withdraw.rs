@@ -83,7 +83,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         " - destination_token_account: {}",
         destination_token_account.key
     );
-    msg!(" - amount: {}", args.amount);
+    msg!(
+        " - amount: {} (remaining: {})",
+        args.amount,
+        token_escrow_data.amount
+    );
 
     // Done
     Ok(())

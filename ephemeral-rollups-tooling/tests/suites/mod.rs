@@ -1,2 +1,3 @@
-pub mod test_localnet_lamport_escrowing;
-pub mod test_localnet_token_escrowing;
+pub mod test_localnet_lamport_escrow_create_delegate;
+pub mod test_localnet_lamport_escrow_create_transfer_claim;
+pub mod test_localnet_token_escrow_create_deposit_transfer_withdraw;

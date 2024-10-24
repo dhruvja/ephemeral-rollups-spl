@@ -1,5 +1,6 @@
 pub mod process_lamport_escrow_claim;
 pub mod process_lamport_escrow_create;
+pub mod process_lamport_escrow_delegate;
 pub mod process_token_escrow_create;
 pub mod process_token_escrow_deposit;
 pub mod process_token_escrow_transfer;

@@ -15,7 +15,7 @@ use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
 
 #[tokio::test]
-async fn test_localnet_token_escrowing() -> Result<(), ProgramError> {
+async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), ProgramError> {
     let mut program_context: Box<dyn ProgramContext> =
         Box::new(create_program_test_context().await);
 

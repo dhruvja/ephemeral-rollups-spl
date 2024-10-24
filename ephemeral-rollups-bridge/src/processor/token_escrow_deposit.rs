@@ -75,7 +75,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
     msg!(" - index: {}", args.index);
-    msg!(" - amount: {}", args.amount);
+    msg!(
+        " - amount: {} (total: {})",
+        args.amount,
+        token_escrow_data.amount
+    );
 
     // Done
     Ok(())

@@ -1376,6 +1376,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "ephemeral-rollups-bridge",
+ "ephemeral-rollups-sdk",
  "solana-client",
  "solana-program-test",
  "solana-sdk",

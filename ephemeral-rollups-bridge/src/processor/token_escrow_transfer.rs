@@ -95,7 +95,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!(" - token_mint: {}", args.token_mint);
     msg!(" - source_index: {}", args.source_index);
     msg!(" - destination_index: {}", args.destination_index);
-    msg!(" - amount: {}", args.amount);
+    msg!(
+        " - amount: {} (source: {}, destination: {})",
+        args.amount,
+        source_token_escrow_data.amount,
+        destination_token_escrow_data.amount
+    );
 
     // Done
     Ok(())

@@ -8,6 +8,7 @@ edition = "2021"
 default = []
 
 [dev-dependencies]
+ephemeral-rollups-sdk = "0.0.7"
 ephemeral-rollups-bridge = { path = "../ephemeral-rollups-bridge" }
 
 async-trait = "0.1.73"
