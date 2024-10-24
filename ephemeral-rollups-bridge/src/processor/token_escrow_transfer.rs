@@ -11,6 +11,9 @@ pub const DISCRIMINANT: [u8; 8] = [0x01, 0x1d, 0xe7, 0xcb, 0x37, 0x6e, 0x04, 0x7
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
+    pub validator: Pubkey,
+    pub token_mint: Pubkey,
+    pub destination_authority: Pubkey,
     pub source_index: u64,
     pub destination_index: u64,
     pub amount: u64,
@@ -18,9 +21,7 @@ pub struct Args {
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [source_authority, destination_authority, validator, token_mint, source_token_escrow_pda, destination_token_escrow_pda] =
-        accounts
-    else {
+    let [source_authority, source_token_escrow_pda, destination_token_escrow_pda] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
@@ -37,8 +38,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Verify the seeds of the escrow PDA
     let source_token_escrow_seeds = token_escrow_seeds_generator!(
         source_authority.key,
-        validator.key,
-        token_mint.key,
+        args.validator,
+        args.token_mint,
         args.source_index
     );
     ensure_is_pda(
@@ -49,9 +50,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let destination_token_escrow_seeds = token_escrow_seeds_generator!(
-        destination_authority.key,
-        validator.key,
-        token_mint.key,
+        args.destination_authority,
+        args.validator,
+        args.token_mint,
         args.destination_index
     );
     ensure_is_pda(
@@ -89,9 +90,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Transfered between TokenEscrow");
     msg!(" - source_authority: {}", source_authority.key);
-    msg!(" - destination_authority: {}", destination_authority.key);
-    msg!(" - validator: {}", validator.key);
-    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - destination_authority: {}", args.destination_authority);
+    msg!(" - validator: {}", args.validator);
+    msg!(" - token_mint: {}", args.token_mint);
     msg!(" - source_index: {}", args.source_index);
     msg!(" - destination_index: {}", args.destination_index);
     msg!(" - amount: {}", args.amount);

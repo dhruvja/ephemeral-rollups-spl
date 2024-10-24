@@ -12,12 +12,14 @@ pub const DISCRIMINANT: [u8; 8] = [0x1a, 0x92, 0xb7, 0x8b, 0x57, 0xad, 0x99, 0x0
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
+    pub authority: Pubkey,
+    pub validator: Pubkey,
     pub index: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [payer, authority, validator, lamport_escrow_pda, system_program_id] = accounts else {
+    let [payer, lamport_escrow_pda, system_program_id] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
@@ -30,7 +32,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
-        lamport_escrow_seeds_generator!(authority.key, validator.key, args.index);
+        lamport_escrow_seeds_generator!(args.authority, args.validator, args.index);
     let lamport_escrow_bump = ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
 
     // Initialize the escrow PDA
@@ -52,8 +54,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Created a new LamportEscrow");
-    msg!(" - authority: {}", authority.key);
-    msg!(" - validator: {}", validator.key);
+    msg!(" - authority: {}", args.authority);
+    msg!(" - validator: {}", args.validator);
     msg!(" - index: {}", args.index);
 
     // Done

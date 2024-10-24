@@ -12,13 +12,15 @@ pub const DISCRIMINANT: [u8; 8] = [0xfe, 0x25, 0x5a, 0x94, 0x2e, 0x8e, 0x50, 0xa
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
+    pub authority: Pubkey,
+    pub validator: Pubkey,
+    pub token_mint: Pubkey,
     pub index: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [payer, authority, validator, token_mint, token_escrow_pda, system_program_id] = accounts
-    else {
+    let [payer, token_escrow_pda, system_program_id] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
@@ -31,7 +33,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
+        token_escrow_seeds_generator!(args.authority, args.validator, args.token_mint, args.index);
     let token_escrow_bump = ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Initialize the escrow PDA
@@ -54,9 +56,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Created a new TokenEscrow");
-    msg!(" - authority: {}", authority.key);
-    msg!(" - validator: {}", validator.key);
-    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - authority: {}", args.authority);
+    msg!(" - validator: {}", args.validator);
+    msg!(" - token_mint: {}", args.token_mint);
     msg!(" - index: {}", args.index);
 
     // Done

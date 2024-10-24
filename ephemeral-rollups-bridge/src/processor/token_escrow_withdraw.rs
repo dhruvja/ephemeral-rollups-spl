@@ -14,13 +14,15 @@ pub const DISCRIMINANT: [u8; 8] = [0xda, 0xcf, 0x42, 0xdd, 0x24, 0x78, 0x76, 0x4
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
+    pub validator: Pubkey,
+    pub token_mint: Pubkey,
     pub index: u64,
     pub amount: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [authority, destination_token_account, validator, token_mint, token_escrow_pda, token_vault_pda, token_program_id] =
+    let [authority, destination_token_account, token_escrow_pda, token_vault_pda, token_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -38,11 +40,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, validator.key, token_mint.key, args.index);
+        token_escrow_seeds_generator!(authority.key, args.validator, args.token_mint, args.index);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Verify the seeds of the vault PDA
-    let token_vault_seeds = token_vault_seeds_generator!(validator.key, token_mint.key);
+    let token_vault_seeds = token_vault_seeds_generator!(args.validator, args.token_mint);
     let token_vault_bump = ensure_is_pda(token_vault_pda, token_vault_seeds, program_id)?;
 
     // Update the escrow amount (panic if not enough amount available)
@@ -74,8 +76,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Withdrew from TokenEscrow");
     msg!(" - authority: {}", authority.key);
-    msg!(" - validator: {}", validator.key);
-    msg!(" - token_mint: {}", token_mint.key);
+    msg!(" - validator: {}", args.validator);
+    msg!(" - token_mint: {}", args.token_mint);
     msg!(" - index: {}", args.index);
     msg!(
         " - destination_token_account: {}",
