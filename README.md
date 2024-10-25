@@ -17,11 +17,11 @@ For escrowing lamports, the following IX are provided:
 
 A typical example workflow could like like this:
 
- - `lamport_escrow_create` is called, creating an `wallet1_lamport_escrow` owned by `wallet1` on-chain
- - `wallet2` transfers lamports into the `wallet1_lamport_escrow`
- - `lamport_escrow_delegate` is called, delegating the `wallet1_lamport_escrow` into the ER
- - `wallet1` can now claim all available lamports using `lamport_escrow_claim` from INSIDE the ER
- - `lamport_escrow_undelegate` can optionally be called to be able to claim remaining lamports from the chain later
+ 1) `lamport_escrow_create` is called, creating an `wallet1_lamport_escrow` owned by `wallet1` on-chain
+ 2) `wallet2` transfers lamports into the `wallet1_lamport_escrow`
+ 3) `lamport_escrow_delegate` is called, delegating the `wallet1_lamport_escrow` into the ER
+ 4) `wallet1` can now claim all available lamports using `lamport_escrow_claim` from INSIDE the ER
+ 5) `lamport_escrow_undelegate` can optionally be called to be able to claim remaining lamports from the chain later
 
 ### Escrowing SPL tokens in and out of the ER
 
@@ -36,12 +36,15 @@ For escrowing SPL tokens, the following IX are provided:
 
 A typical example workflow could look like this:
 
- - `token_escrow_create` is called on chain for `wallet1`, creating a `wallet1_token_escrow`
- - `token_escrow_deposit` is called on chain, depositing some tokens into `wallet1_token_escrow`
- - `token_escrow_delegate` is called, moving `wallet1_token_escrow` into the ER
- - `token_escrow_create` is called on chain for `wallet2`, creating a `wallet2_token_escrow`
- - `token_escrow_delegate` is called, moving `wallet2_token_escrow` into the ER
- - `token_escrow_transfer` is called, moving funds from `wallet1_token_escrow` into `wallet2_token_escrow`, all heppening in the ER
- - `token_escrow_undelegate` is called for `wallet2_token_escrow`, bringing it back to chain
- - `token_escrow_withdraw` is then called by `wallet2` to withdraw regular SPL tokens from `wallet2_token_escrow` on-chain
+ 1) `token_escrow_create` is called on chain for `wallet1`, creating a `wallet1_token_escrow`
+ 2) `token_escrow_deposit` is called on chain, depositing some tokens into `wallet1_token_escrow`
+ 3) `token_escrow_delegate` is called, moving `wallet1_token_escrow` into the ER
+ 4) `token_escrow_create` is called on chain for `wallet2`, creating a `wallet2_token_escrow`
+ 5) `token_escrow_delegate` is called, moving `wallet2_token_escrow` into the ER
+ 6) `token_escrow_transfer` is called, moving funds from `wallet1_token_escrow` into `wallet2_token_escrow`, all heppening in the ER
+ 7) `token_escrow_undelegate` is called for `wallet2_token_escrow`, bringing it back to chain
+ 8) `token_escrow_withdraw` is then called by `wallet2` to withdraw regular SPL tokens from `wallet2_token_escrow` on-chain
 
+## Ephemeral Rollups Tooling
+
+This crate provide example tests and scenario that can be used to help understand how each instructions can be used.
