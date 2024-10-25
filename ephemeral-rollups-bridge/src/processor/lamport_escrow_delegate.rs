@@ -25,29 +25,19 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     };
     let args = Args::try_from_slice(data)?;
 
-    msg!("hello 1");
-
     // Verify that the payer is allowed to pay for the rent fees
     ensure_is_signer(payer)?;
-
-    msg!("hello 3");
 
     // Verify that the authority user is indeed the one initiating this IX
     ensure_is_signer(authority)?;
 
-    msg!("hello 1");
-
     // Verify that the program has proper control of the PDA (and that it's been initialized)
     ensure_is_owned_by_program(lamport_escrow_pda, program_id)?;
-
-    msg!("hello 5");
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
         lamport_escrow_seeds_generator!(authority.key, args.validator, args.index);
     ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
-
-    msg!("hello 1");
 
     // Verify that the escrow PDA is properly initalized
     let lamport_escrow_data = LamportEscrow::try_from_slice(&lamport_escrow_pda.data.borrow())?;
@@ -55,28 +45,10 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::InvalidAccountData);
     }
 
-    msg!("hello 6");
-
     // Verify that the owner_program_id account passed as parameter is valid
     if owner_program_id.key.ne(program_id) {
         return Err(ProgramError::IncorrectProgramId);
     }
-
-    msg!("hello 9");
-
-    // Log outcome
-    msg!("Ephemeral Rollups Bridge: Delegated a new LamportEscrow");
-    msg!(" - authority: {}", authority.key);
-    msg!(" - validator: {}", args.validator);
-    msg!(" - index: {}", args.index);
-    msg!(" - lamport_escrow_pda: {}", lamport_escrow_pda.key);
-    msg!(" - delegation_buffer_pda: {}", delegation_buffer_pda.key);
-    msg!(" - delegation_record_pda: {}", delegation_record_pda.key);
-    msg!(
-        " - delegation_metadata_pda: {}",
-        delegation_metadata_pda.key
-    );
-    msg!(" - delegation_program_id: {}", delegation_program_id.key);
 
     // Delegate the escrow, relinquish control on chain (it will become claimable in the Ephem)
     delegate_account(
@@ -92,6 +64,13 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         i64::MAX,
         u32::MAX,
     )?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Delegated a LamportEscrow");
+    msg!(" - authority: {}", authority.key);
+    msg!(" - validator: {}", args.validator);
+    msg!(" - index: {}", args.index);
+    msg!(" - lamports: {}", lamport_escrow_pda.lamports());
 
     // Done
     Ok(())

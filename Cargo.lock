@@ -1375,6 +1375,7 @@ name = "ephemeral-rollups-tooling"
 version = "0.0.1"
 dependencies = [
  "async-trait",
+ "borsh 1.5.1",
  "ephemeral-rollups-bridge",
  "ephemeral-rollups-sdk",
  "solana-client",

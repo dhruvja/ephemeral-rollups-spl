@@ -1,5 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use ephemeral_rollups_sdk::cpi::delegate_account;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
@@ -64,6 +65,14 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         i64::MAX,
         u32::MAX,
     )?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Bridge: Delegated a TokenEscrow");
+    msg!(" - authority: {}", authority.key);
+    msg!(" - validator: {}", args.validator);
+    msg!(" - token_mint: {}", args.token_mint);
+    msg!(" - index: {}", args.index);
+    msg!(" - amount: {}", token_escrow_data.amount);
 
     // Done
     Ok(())

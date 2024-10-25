@@ -1,3 +1,4 @@
+use ephemeral_rollups_bridge::state::token_escrow::TokenEscrow;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
@@ -10,12 +11,13 @@ use crate::api::program_bridge::process_token_vault_init::process_token_vault_in
 use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
+use crate::api::program_context::read_account::read_account_borsh;
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
 
 #[tokio::test]
-async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), ProgramError> {
+async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), ProgramError> {
     let mut program_context: Box<dyn ProgramContext> =
         Box::new(create_program_test_context().await);
 
@@ -27,9 +29,6 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
     let authority1 = Keypair::new();
     let authority2 = Keypair::new();
 
-    let index1 = 99;
-    let index2 = 42;
-
     let source = Keypair::new();
     let destination = Keypair::new();
 
@@ -38,41 +37,59 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         .process_airdrop(&payer.pubkey(), 1_000_000_000_000)
         .await?;
 
-    // Create USDC mint
-    let usdc_mint = Keypair::new();
+    // Create token mint
+    let token_mint = Keypair::new();
     process_token_mint_init(
         &mut program_context,
         &payer,
-        &usdc_mint,
+        &token_mint,
         6,
-        &usdc_mint.pubkey(),
+        &token_mint.pubkey(),
     )
     .await?;
 
-    // Airdrop USDC to our source wallet
+    // Airdrop token to our source wallet
     let source_usdc = process_associated_token_account_get_or_init(
         &mut program_context,
         &payer,
-        &usdc_mint.pubkey(),
+        &token_mint.pubkey(),
         &source.pubkey(),
     )
     .await?;
     process_token_mint_to(
         &mut program_context,
         &payer,
-        &usdc_mint.pubkey(),
-        &usdc_mint,
+        &token_mint.pubkey(),
+        &token_mint,
         &source_usdc,
         100_000_000,
     )
     .await?;
 
-    // Prepare being able to escrow USDC for this validator
+    // Escrow accounts we will be creating
+    let authority1_token_escrow_index = 99;
+    let authority1_token_escrow_pda = TokenEscrow::generate_pda(
+        &authority1.pubkey(),
+        &validator,
+        &token_mint.pubkey(),
+        authority1_token_escrow_index,
+        &ephemeral_rollups_bridge::id(),
+    );
+    let authority2_token_escrow_index = 42;
+    let authority2_token_escrow_pda = TokenEscrow::generate_pda(
+        &authority2.pubkey(),
+        &validator,
+        &token_mint.pubkey(),
+        authority2_token_escrow_index,
+        &ephemeral_rollups_bridge::id(),
+    );
+
+    // Prepare being able to escrow token for this validator
     process_token_vault_init(
         &mut program_context,
         &payer,
         &validator,
-        &usdc_mint.pubkey(),
+        &token_mint.pubkey(),
     )
     .await?;
 
@@ -82,10 +99,18 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &payer,
         &authority1.pubkey(),
         &validator,
-        &usdc_mint.pubkey(),
-        index1,
+        &token_mint.pubkey(),
+        authority1_token_escrow_index,
     )
     .await?;
+
+    // No balance yet
+    assert_eq!(
+        0,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
+            .await?
+            .amount
+    );
 
     // Fund the escrow
     process_token_escrow_deposit(
@@ -95,11 +120,19 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &source_usdc,
         &authority1.pubkey(),
         &validator,
-        &usdc_mint.pubkey(),
-        index1,
+        &token_mint.pubkey(),
+        authority1_token_escrow_index,
         10_000_000,
     )
     .await?;
+
+    // New balance
+    assert_eq!(
+        10_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
+            .await?
+            .amount
+    );
 
     // Fund the escrow some more
     process_token_escrow_deposit(
@@ -109,11 +142,19 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &source_usdc,
         &authority1.pubkey(),
         &validator,
-        &usdc_mint.pubkey(),
-        index1,
+        &token_mint.pubkey(),
+        authority1_token_escrow_index,
         90_000_000,
     )
     .await?;
+
+    // New balance
+    assert_eq!(
+        100_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
+            .await?
+            .amount
+    );
 
     // Create a different escrow (but this one is unfunded)
     process_token_escrow_create(
@@ -121,10 +162,18 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &payer,
         &authority2.pubkey(),
         &validator,
-        &usdc_mint.pubkey(),
-        index2,
+        &token_mint.pubkey(),
+        authority2_token_escrow_index,
     )
     .await?;
+
+    // New escrow
+    assert_eq!(
+        0,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
+            .await?
+            .amount
+    );
 
     // Transfer some from 1->2
     process_token_escrow_transfer(
@@ -133,12 +182,26 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &authority1,
         &authority2.pubkey(),
         &validator,
-        &usdc_mint.pubkey(),
-        index1,
-        index2,
+        &token_mint.pubkey(),
+        authority1_token_escrow_index,
+        authority2_token_escrow_index,
         1_000_000,
     )
     .await?;
+
+    // Transfer success should be reflected in the balances
+    assert_eq!(
+        99_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
+            .await?
+            .amount
+    );
+    assert_eq!(
+        1_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
+            .await?
+            .amount
+    );
 
     // Transfer all remaining from 1->2
     process_token_escrow_transfer(
@@ -147,12 +210,26 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &authority1,
         &authority2.pubkey(),
         &validator,
-        &usdc_mint.pubkey(),
-        index1,
-        index2,
+        &token_mint.pubkey(),
+        authority1_token_escrow_index,
+        authority2_token_escrow_index,
         99_000_000,
     )
     .await?;
+
+    // Transfer success should be reflected in the balances
+    assert_eq!(
+        0,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
+            .await?
+            .amount
+    );
+    assert_eq!(
+        100_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
+            .await?
+            .amount
+    );
 
     // Transfer back most of it back 2->1
     process_token_escrow_transfer(
@@ -161,18 +238,32 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &authority2,
         &authority1.pubkey(),
         &validator,
-        &usdc_mint.pubkey(),
-        index2,
-        index1,
+        &token_mint.pubkey(),
+        authority2_token_escrow_index,
+        authority1_token_escrow_index,
         75_000_000,
     )
     .await?;
+
+    // Transfer success should be reflected in the balances
+    assert_eq!(
+        75_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
+            .await?
+            .amount
+    );
+    assert_eq!(
+        25_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
+            .await?
+            .amount
+    );
 
     // Withdraw everything after that
     let destination_usdc = process_associated_token_account_get_or_init(
         &mut program_context,
         &payer,
-        &usdc_mint.pubkey(),
+        &token_mint.pubkey(),
         &destination.pubkey(),
     )
     .await?;
@@ -184,8 +275,8 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &authority1,
         &destination_usdc,
         &validator,
-        &usdc_mint.pubkey(),
-        index1,
+        &token_mint.pubkey(),
+        authority1_token_escrow_index,
         75_000_000,
     )
     .await?;
@@ -197,8 +288,8 @@ async fn test_localnet_token_escrow_create_deposit_transfer_withdraw() -> Result
         &authority2,
         &destination_usdc,
         &validator,
-        &usdc_mint.pubkey(),
-        index2,
+        &token_mint.pubkey(),
+        authority2_token_escrow_index,
         25_000_000,
     )
     .await?;
