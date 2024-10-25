@@ -1,3 +1,4 @@
+use borsh::BorshDeserialize;
 use solana_sdk::account::Account;
 use solana_sdk::program_pack::IsInitialized;
 use solana_sdk::program_pack::Pack;
@@ -10,7 +11,7 @@ pub async fn read_account(
     program_context: &mut Box<dyn ProgramContext>,
     address: &Pubkey,
 ) -> Result<Option<Account>, ProgramError> {
-    Ok(program_context.get_account(address).await?)
+    program_context.get_account(address).await
 }
 
 pub async fn read_account_exists(
@@ -49,4 +50,13 @@ pub async fn read_account_packed<T: Pack + IsInitialized>(
     let raw_account_data = read_account_data(program_context, address).await?;
     let raw_account_slice: &[u8] = &raw_account_data;
     T::unpack(raw_account_slice).map_err(ProgramError::Program)
+}
+
+pub async fn read_account_borsh<T: BorshDeserialize>(
+    program_context: &mut Box<dyn ProgramContext>,
+    address: &Pubkey,
+) -> Result<T, ProgramError> {
+    let raw_account_data = read_account_data(program_context, address).await?;
+    let raw_account_slice: &[u8] = &raw_account_data;
+    T::try_from_slice(raw_account_slice).map_err(ProgramError::Io)
 }

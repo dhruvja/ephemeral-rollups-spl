@@ -20,7 +20,7 @@ pub async fn process_token_escrow_withdraw(
 ) -> Result<(), ProgramError> {
     let instruction = token_escrow_withdraw::instruction(
         &authority.pubkey(),
-        &destination_token_account,
+        destination_token_account,
         validator,
         token_mint,
         index,

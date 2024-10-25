@@ -41,7 +41,7 @@ pub const TOKEN_ESCROW_SEEDS_PREFIX: &[u8] = b"token_escrow";
 macro_rules! token_escrow_seeds_generator {
     ($authority: expr, $validator: expr, $token_mint: expr, $index: expr) => {
         &[
-            crate::state::token_escrow::TOKEN_ESCROW_SEEDS_PREFIX,
+            $crate::state::token_escrow::TOKEN_ESCROW_SEEDS_PREFIX,
             &$authority.to_bytes(),
             &$validator.to_bytes(),
             &$token_mint.to_bytes(),

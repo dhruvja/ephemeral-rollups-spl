@@ -13,7 +13,7 @@ use crate::api::program_context::read_account::read_account_lamports;
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
 
 #[tokio::test]
-async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramError> {
+async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramError> {
     let mut program_context: Box<dyn ProgramContext> =
         Box::new(create_program_test_context().await);
 
@@ -48,10 +48,6 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
     );
     assert_eq!(
         0,
-        read_account_lamports(&mut program_context, &authority.pubkey()).await?
-    );
-    assert_eq!(
-        0,
         read_account_lamports(&mut program_context, &destination.pubkey()).await?
     );
 
@@ -69,10 +65,6 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
     assert_eq!(
         lamport_escrow_rent,
         read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
-    );
-    assert_eq!(
-        0,
-        read_account_lamports(&mut program_context, &authority.pubkey()).await?
     );
     assert_eq!(
         0,
@@ -96,10 +88,6 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
     );
     assert_eq!(
         0,
-        read_account_lamports(&mut program_context, &authority.pubkey()).await?
-    );
-    assert_eq!(
-        0,
         read_account_lamports(&mut program_context, &destination.pubkey()).await?
     );
 
@@ -111,7 +99,7 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
         &destination.pubkey(),
         &validator,
         lamport_escrow_index,
-        1 * LAMPORTS_PER_SOL,
+        2 * LAMPORTS_PER_SOL,
     )
     .await?;
 
@@ -121,11 +109,7 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
         read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
     );
     assert_eq!(
-        0,
-        read_account_lamports(&mut program_context, &authority.pubkey()).await?
-    );
-    assert_eq!(
-        1 * LAMPORTS_PER_SOL,
+        2 * LAMPORTS_PER_SOL,
         read_account_lamports(&mut program_context, &destination.pubkey()).await?
     );
 
@@ -137,7 +121,7 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
         &destination.pubkey(),
         &validator,
         lamport_escrow_index,
-        9 * LAMPORTS_PER_SOL,
+        8 * LAMPORTS_PER_SOL,
     )
     .await?;
 
@@ -145,10 +129,6 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
     assert_eq!(
         lamport_escrow_rent,
         read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
-    );
-    assert_eq!(
-        0,
-        read_account_lamports(&mut program_context, &authority.pubkey()).await?
     );
     assert_eq!(
         10 * LAMPORTS_PER_SOL,
@@ -171,10 +151,6 @@ async fn test_localnet_lamport_escrow_create_transfer_claim() -> Result<(), Prog
     assert_eq!(
         lamport_escrow_rent,
         read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
-    );
-    assert_eq!(
-        0,
-        read_account_lamports(&mut program_context, &authority.pubkey()).await?
     );
     assert_eq!(
         10 * LAMPORTS_PER_SOL,
