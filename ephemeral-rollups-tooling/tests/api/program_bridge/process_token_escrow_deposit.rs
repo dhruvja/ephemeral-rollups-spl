@@ -16,7 +16,7 @@ pub async fn process_token_escrow_deposit(
     authority: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    index: u64,
+    number: u64,
     amount: u64,
 ) -> Result<(), ProgramError> {
     let instruction = token_escrow_deposit::instruction(
@@ -25,7 +25,7 @@ pub async fn process_token_escrow_deposit(
         authority,
         validator,
         token_mint,
-        index,
+        number,
         amount,
     );
     process_instruction_with_signer(program_context, instruction, payer, source_authority).await

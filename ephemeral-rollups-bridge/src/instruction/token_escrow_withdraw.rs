@@ -14,13 +14,13 @@ pub fn instruction(
     destination_token_account: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    index: u64,
+    number: u64,
     amount: u64,
 ) -> Instruction {
     let program_id = crate::id();
 
     let token_escrow_pda =
-        TokenEscrow::generate_pda(authority, validator, token_mint, index, &program_id);
+        TokenEscrow::generate_pda(authority, validator, token_mint, number, &program_id);
     let token_vault_pda = token_vault_generate_pda(validator, token_mint, &program_id);
 
     let accounts = vec![
@@ -36,7 +36,7 @@ pub fn instruction(
     token_escrow_withdraw::Args {
         validator: *validator,
         token_mint: *token_mint,
-        index,
+        number,
         amount,
     }
     .serialize(&mut data)

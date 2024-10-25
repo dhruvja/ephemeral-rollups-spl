@@ -10,11 +10,11 @@ pub fn instruction(
     authority: &Pubkey,
     destination: &Pubkey,
     validator: &Pubkey,
-    index: u64,
+    number: u64,
     lamports: u64,
 ) -> Instruction {
     let program_id = crate::id();
-    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, index, &program_id);
+    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, number, &program_id);
 
     let accounts = vec![
         AccountMeta::new_readonly(*authority, true),
@@ -26,7 +26,7 @@ pub fn instruction(
     data.extend_from_slice(&lamport_escrow_claim::DISCRIMINANT);
     lamport_escrow_claim::Args {
         validator: *validator,
-        index,
+        number,
         lamports,
     }
     .serialize(&mut data)

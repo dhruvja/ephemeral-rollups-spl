@@ -15,10 +15,10 @@ pub fn instruction(
     payer: &Pubkey,
     authority: &Pubkey,
     validator: &Pubkey,
-    index: u64,
+    number: u64,
 ) -> Instruction {
     let program_id = crate::id();
-    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, index, &program_id);
+    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, number, &program_id);
 
     let delegation_buffer_pda =
         Pubkey::find_program_address(&[BUFFER, &lamport_escrow_pda.to_bytes()], &program_id).0;
@@ -43,7 +43,7 @@ pub fn instruction(
     data.extend_from_slice(&lamport_escrow_delegate::DISCRIMINANT);
     lamport_escrow_delegate::Args {
         validator: *validator,
-        index,
+        number,
     }
     .serialize(&mut data)
     .unwrap();

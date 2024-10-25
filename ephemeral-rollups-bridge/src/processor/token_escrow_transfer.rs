@@ -14,8 +14,8 @@ pub struct Args {
     pub validator: Pubkey,
     pub token_mint: Pubkey,
     pub destination_authority: Pubkey,
-    pub source_index: u64,
-    pub destination_index: u64,
+    pub source_number: u64,
+    pub destination_number: u64,
     pub amount: u64,
 }
 
@@ -40,7 +40,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         source_authority.key,
         args.validator,
         args.token_mint,
-        args.source_index
+        args.source_number
     );
     ensure_is_pda(
         source_token_escrow_pda,
@@ -53,7 +53,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         args.destination_authority,
         args.validator,
         args.token_mint,
-        args.destination_index
+        args.destination_number
     );
     ensure_is_pda(
         destination_token_escrow_pda,
@@ -93,8 +93,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!(" - destination_authority: {}", args.destination_authority);
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
-    msg!(" - source_index: {}", args.source_index);
-    msg!(" - destination_index: {}", args.destination_index);
+    msg!(" - source_number: {}", args.source_number);
+    msg!(" - destination_number: {}", args.destination_number);
     msg!(
         " - amount: {} (source: {}, destination: {})",
         args.amount,

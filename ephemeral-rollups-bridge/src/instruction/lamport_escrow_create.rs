@@ -11,10 +11,10 @@ pub fn instruction(
     payer: &Pubkey,
     authority: &Pubkey,
     validator: &Pubkey,
-    index: u64,
+    number: u64,
 ) -> Instruction {
     let program_id = crate::id();
-    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, index, &program_id);
+    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, number, &program_id);
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -27,7 +27,7 @@ pub fn instruction(
     lamport_escrow_create::Args {
         authority: *authority,
         validator: *validator,
-        index,
+        number,
     }
     .serialize(&mut data)
     .unwrap();

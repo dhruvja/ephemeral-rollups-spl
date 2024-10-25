@@ -15,8 +15,8 @@ pub async fn process_token_escrow_transfer(
     destination_authority: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    source_index: u64,
-    destination_index: u64,
+    source_number: u64,
+    destination_number: u64,
     amount: u64,
 ) -> Result<(), ProgramError> {
     let instruction = token_escrow_transfer::instruction(
@@ -24,8 +24,8 @@ pub async fn process_token_escrow_transfer(
         destination_authority,
         validator,
         token_mint,
-        source_index,
-        destination_index,
+        source_number,
+        destination_number,
         amount,
     );
     process_instruction_with_signer(program_context, instruction, payer, source_authority).await

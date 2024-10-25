@@ -14,7 +14,7 @@ pub const DISCRIMINANT: [u8; 8] = [0x1a, 0x92, 0xb7, 0x8b, 0x57, 0xad, 0x99, 0x0
 pub struct Args {
     pub authority: Pubkey,
     pub validator: Pubkey,
-    pub index: u64,
+    pub number: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
@@ -32,7 +32,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
-        lamport_escrow_seeds_generator!(args.authority, args.validator, args.index);
+        lamport_escrow_seeds_generator!(args.authority, args.validator, args.number);
     let lamport_escrow_bump = ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
 
     // Initialize the escrow PDA
@@ -56,7 +56,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!("Ephemeral Rollups Bridge: Created a new LamportEscrow");
     msg!(" - authority: {}", args.authority);
     msg!(" - validator: {}", args.validator);
-    msg!(" - index: {}", args.index);
+    msg!(" - number: {}", args.number);
 
     // Done
     Ok(())

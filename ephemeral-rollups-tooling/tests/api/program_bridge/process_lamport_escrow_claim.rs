@@ -14,14 +14,14 @@ pub async fn process_lamport_escrow_claim(
     authority: &Keypair,
     destination: &Pubkey,
     validator: &Pubkey,
-    index: u64,
+    number: u64,
     lamports: u64,
 ) -> Result<(), ProgramError> {
     let instruction = lamport_escrow_claim::instruction(
         &authority.pubkey(),
         destination,
         validator,
-        index,
+        number,
         lamports,
     );
     process_instruction_with_signer(program_context, instruction, payer, authority).await

@@ -13,13 +13,13 @@ pub async fn process_lamport_escrow_delegate(
     payer: &Keypair,
     authority: &Keypair,
     validator: &Pubkey,
-    index: u64,
+    number: u64,
 ) -> Result<(), ProgramError> {
     let instruction = lamport_escrow_delegate::instruction(
         &payer.pubkey(),
         &authority.pubkey(),
         validator,
-        index,
+        number,
     );
     process_instruction_with_signer(program_context, instruction, payer, authority).await
 }

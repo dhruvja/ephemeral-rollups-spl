@@ -15,7 +15,7 @@ pub struct Args {
     pub authority: Pubkey,
     pub validator: Pubkey,
     pub token_mint: Pubkey,
-    pub index: u64,
+    pub number: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
@@ -33,7 +33,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(args.authority, args.validator, args.token_mint, args.index);
+        token_escrow_seeds_generator!(args.authority, args.validator, args.token_mint, args.number);
     let token_escrow_bump = ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Initialize the escrow PDA
@@ -59,7 +59,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!(" - authority: {}", args.authority);
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
-    msg!(" - index: {}", args.index);
+    msg!(" - number: {}", args.number);
 
     // Done
     Ok(())

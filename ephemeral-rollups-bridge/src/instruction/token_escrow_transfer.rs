@@ -11,8 +11,8 @@ pub fn instruction(
     destination_authority: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    source_index: u64,
-    destination_index: u64,
+    source_number: u64,
+    destination_number: u64,
     amount: u64,
 ) -> Instruction {
     let program_id = crate::id();
@@ -21,14 +21,14 @@ pub fn instruction(
         source_authority,
         validator,
         token_mint,
-        source_index,
+        source_number,
         &program_id,
     );
     let destination_token_escrow_pda = TokenEscrow::generate_pda(
         destination_authority,
         validator,
         token_mint,
-        destination_index,
+        destination_number,
         &program_id,
     );
 
@@ -44,8 +44,8 @@ pub fn instruction(
         validator: *validator,
         token_mint: *token_mint,
         destination_authority: *destination_authority,
-        source_index,
-        destination_index,
+        source_number,
+        destination_number,
         amount,
     }
     .serialize(&mut data)

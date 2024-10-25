@@ -25,11 +25,11 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
     let destination = Keypair::new();
 
     // Lamport escrow account we will be using
-    let lamport_escrow_index = 42;
+    let lamport_escrow_number = 42;
     let lamport_escrow_pda = LamportEscrow::generate_pda(
         &authority.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
         &ephemeral_rollups_bridge::id(),
     );
     let lamport_escrow_rent = program_context
@@ -57,7 +57,7 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         &payer,
         &authority.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
     )
     .await?;
 
@@ -98,14 +98,14 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
         2 * LAMPORTS_PER_SOL,
     )
     .await?;
 
     // After the escrow has had some funds claimed
     assert_eq!(
-        lamport_escrow_rent + 9 * LAMPORTS_PER_SOL,
+        lamport_escrow_rent + 8 * LAMPORTS_PER_SOL,
         read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
     );
     assert_eq!(
@@ -120,7 +120,7 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
         8 * LAMPORTS_PER_SOL,
     )
     .await?;
@@ -142,7 +142,7 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
         0,
     )
     .await?;
@@ -164,7 +164,7 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
         1,
     )
     .await

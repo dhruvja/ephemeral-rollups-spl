@@ -62,12 +62,12 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
     .await?;
 
     // Escrow account we will be creating
-    let authority_token_escrow_index = 99;
+    let authority_token_escrow_number = 99;
     let authority_token_escrow_pda = TokenEscrow::generate_pda(
         &authority.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority_token_escrow_index,
+        authority_token_escrow_number,
         &ephemeral_rollups_bridge::id(),
     );
 
@@ -87,7 +87,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
         &authority.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority_token_escrow_index,
+        authority_token_escrow_number,
     )
     .await?;
 
@@ -108,7 +108,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
         &authority.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority_token_escrow_index,
+        authority_token_escrow_number,
         10_000_000,
     )
     .await?;
@@ -128,7 +128,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
         &authority,
         &validator,
         &token_mint.pubkey(),
-        authority_token_escrow_index,
+        authority_token_escrow_number,
     )
     .await?;
 

@@ -14,14 +14,14 @@ pub async fn process_token_escrow_delegate(
     authority: &Keypair,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    index: u64,
+    number: u64,
 ) -> Result<(), ProgramError> {
     let instruction = token_escrow_delegate::instruction(
         &payer.pubkey(),
         &authority.pubkey(),
         validator,
         token_mint,
-        index,
+        number,
     );
     process_instruction_with_signer(program_context, instruction, payer, authority).await
 }

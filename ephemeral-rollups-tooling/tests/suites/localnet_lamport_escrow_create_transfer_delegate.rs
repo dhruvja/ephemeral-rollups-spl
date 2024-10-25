@@ -24,11 +24,11 @@ async fn localnet_lamport_escrow_create_transfer_delegate() -> Result<(), Progra
     let authority = Keypair::new();
 
     // Lamport escrow account we will be using
-    let lamport_escrow_index = 42;
+    let lamport_escrow_number = 42;
     let lamport_escrow_pda = LamportEscrow::generate_pda(
         &authority.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
         &ephemeral_rollups_bridge::id(),
     );
     let lamport_escrow_rent = program_context
@@ -46,7 +46,7 @@ async fn localnet_lamport_escrow_create_transfer_delegate() -> Result<(), Progra
         &payer,
         &authority.pubkey(),
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
     )
     .await?;
 
@@ -78,7 +78,7 @@ async fn localnet_lamport_escrow_create_transfer_delegate() -> Result<(), Progra
         &payer,
         &authority,
         &validator,
-        lamport_escrow_index,
+        lamport_escrow_number,
     )
     .await?;
 
