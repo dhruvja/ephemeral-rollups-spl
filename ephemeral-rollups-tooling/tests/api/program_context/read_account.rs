@@ -11,7 +11,7 @@ pub async fn read_account(
     program_context: &mut Box<dyn ProgramContext>,
     address: &Pubkey,
 ) -> Result<Option<Account>, ProgramError> {
-    Ok(program_context.get_account(address).await?)
+    program_context.get_account(address).await
 }
 
 pub async fn read_account_exists(

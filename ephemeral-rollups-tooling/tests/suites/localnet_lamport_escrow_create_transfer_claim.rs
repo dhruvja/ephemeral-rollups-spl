@@ -99,7 +99,7 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         &destination.pubkey(),
         &validator,
         lamport_escrow_index,
-        1 * LAMPORTS_PER_SOL,
+        2 * LAMPORTS_PER_SOL,
     )
     .await?;
 
@@ -109,7 +109,7 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
     );
     assert_eq!(
-        1 * LAMPORTS_PER_SOL,
+        2 * LAMPORTS_PER_SOL,
         read_account_lamports(&mut program_context, &destination.pubkey()).await?
     );
 
@@ -121,7 +121,7 @@ async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramEr
         &destination.pubkey(),
         &validator,
         lamport_escrow_index,
-        9 * LAMPORTS_PER_SOL,
+        8 * LAMPORTS_PER_SOL,
     )
     .await?;
 

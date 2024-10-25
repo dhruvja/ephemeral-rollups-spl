@@ -21,7 +21,7 @@ pub async fn process_token_escrow_deposit(
 ) -> Result<(), ProgramError> {
     let instruction = token_escrow_deposit::instruction(
         &source_authority.pubkey(),
-        &source_token_account,
+        source_token_account,
         authority,
         validator,
         token_mint,
