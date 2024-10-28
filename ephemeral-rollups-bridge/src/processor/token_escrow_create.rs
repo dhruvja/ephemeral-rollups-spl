@@ -56,10 +56,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Created a new TokenEscrow");
-    msg!(" - authority: {}", args.authority);
+    msg!(" - authority: {} ({})", args.authority, args.number);
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
-    msg!(" - number: {}", args.number);
 
     // Done
     Ok(())

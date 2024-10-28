@@ -54,9 +54,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Created a new LamportEscrow");
-    msg!(" - authority: {}", args.authority);
-    msg!(" - validator: {}", args.validator);
-    msg!(" - number: {}", args.number);
+    msg!(" - authority: {} ({})", args.authority, args.number);
 
     // Done
     Ok(())

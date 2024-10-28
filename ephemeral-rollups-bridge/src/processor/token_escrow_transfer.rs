@@ -89,12 +89,18 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Bridge: Transfered between TokenEscrow");
-    msg!(" - source_authority: {}", source_authority.key);
-    msg!(" - destination_authority: {}", args.destination_authority);
+    msg!(
+        " - source_authority: {} ({})",
+        source_authority.key,
+        args.source_number
+    );
+    msg!(
+        " - destination_authority: {} ({})",
+        args.destination_authority,
+        args.destination_number
+    );
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
-    msg!(" - source_number: {}", args.source_number);
-    msg!(" - destination_number: {}", args.destination_number);
     msg!(
         " - amount: {} (source: {}, destination: {})",
         args.amount,
