@@ -13,7 +13,7 @@ pub const DISCRIMINANT: [u8; 8] = [0x4b, 0x9c, 0x96, 0x18, 0xdf, 0x98, 0x31, 0x2
 pub struct Args {
     pub validator: Pubkey,
     pub token_mint: Pubkey,
-    pub number: u64,
+    pub slot: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
@@ -33,7 +33,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, args.validator, args.token_mint, args.number);
+        token_escrow_seeds_generator!(authority.key, args.validator, args.token_mint, args.slot);
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized

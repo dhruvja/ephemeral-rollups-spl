@@ -14,9 +14,9 @@ pub async fn process_token_escrow_create(
     authority: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    number: u64,
+    slot: u64,
 ) -> Result<(), ProgramError> {
     let instruction =
-        token_escrow_create::instruction(&payer.pubkey(), authority, validator, token_mint, number);
+        token_escrow_create::instruction(&payer.pubkey(), authority, validator, token_mint, slot);
     process_instruction_with_signer(program_context, instruction, payer, payer).await
 }

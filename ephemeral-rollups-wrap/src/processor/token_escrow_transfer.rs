@@ -14,8 +14,8 @@ pub struct Args {
     pub validator: Pubkey,
     pub token_mint: Pubkey,
     pub destination_authority: Pubkey,
-    pub source_number: u64,
-    pub destination_number: u64,
+    pub source_slot: u64,
+    pub destination_slot: u64,
     pub amount: u64,
 }
 
@@ -40,7 +40,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         source_authority.key,
         args.validator,
         args.token_mint,
-        args.source_number
+        args.source_slot
     );
     ensure_is_pda(
         source_token_escrow_pda,
@@ -53,7 +53,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         args.destination_authority,
         args.validator,
         args.token_mint,
-        args.destination_number
+        args.destination_slot
     );
     ensure_is_pda(
         destination_token_escrow_pda,
@@ -92,12 +92,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!(
         " - source_authority: {} ({})",
         source_authority.key,
-        args.source_number
+        args.source_slot
     );
     msg!(
         " - destination_authority: {} ({})",
         args.destination_authority,
-        args.destination_number
+        args.destination_slot
     );
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);

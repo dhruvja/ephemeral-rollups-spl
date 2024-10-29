@@ -1,13 +1,19 @@
 use std::time::{Duration, Instant};
 
-use ephemeral_rollups_wrap::state::token_escrow::TokenEscrow;
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
+use ephemeral_rollups_wrap::state::token_escrow::TokenEscrow;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
+use crate::api::program_context::program_context_trait::ProgramContext;
+use crate::api::program_context::program_error::ProgramError;
+use crate::api::program_context::read_account::{read_account_borsh, read_account_owner};
+use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
+use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
+use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
 use crate::api::program_wrap::process_token_escrow_create::process_token_escrow_create;
 use crate::api::program_wrap::process_token_escrow_delegate::process_token_escrow_delegate;
 use crate::api::program_wrap::process_token_escrow_deposit::process_token_escrow_deposit;
@@ -15,12 +21,6 @@ use crate::api::program_wrap::process_token_escrow_transfer::process_token_escro
 use crate::api::program_wrap::process_token_escrow_undelegate::process_token_escrow_undelegate;
 use crate::api::program_wrap::process_token_escrow_withdraw::process_token_escrow_withdraw;
 use crate::api::program_wrap::process_token_vault_init::process_token_vault_init;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::{read_account_borsh, read_account_owner};
-use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
-use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
-use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
 
 #[tokio::test]
 async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
@@ -28,16 +28,12 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     let mut program_context_chain: Box<dyn ProgramContext> =
         Box::new(RpcClient::new_with_commitment(
             "https://api.devnet.solana.com".to_string(),
-            CommitmentConfig {
-                commitment: CommitmentLevel::Confirmed,
-            },
+            CommitmentConfig::confirmed(),
         ));
     let mut program_context_ephem: Box<dyn ProgramContext> =
         Box::new(RpcClient::new_with_commitment(
             "https://devnet.magicblock.app".to_string(),
-            CommitmentConfig {
-                commitment: CommitmentLevel::Confirmed,
-            },
+            CommitmentConfig::confirmed(),
         ));
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
@@ -92,20 +88,20 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     .await?;
 
     // Escrow accounts we will be creating
-    let authority1_token_escrow_number = 99;
+    let authority1_token_escrow_slot = 99;
     let authority1_token_escrow_pda = TokenEscrow::generate_pda(
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
         &ephemeral_rollups_wrap::id(),
     );
-    let authority2_token_escrow_number = 11;
+    let authority2_token_escrow_slot = 11;
     let authority2_token_escrow_pda = TokenEscrow::generate_pda(
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
         &ephemeral_rollups_wrap::id(),
     );
 
@@ -125,7 +121,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
     )
     .await?;
     process_token_escrow_create(
@@ -134,7 +130,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
     )
     .await?;
 
@@ -147,7 +143,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
         10_000_000,
     )
     .await?;
@@ -159,7 +155,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority1,
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
     )
     .await?;
     process_token_escrow_delegate(
@@ -168,7 +164,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority2,
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
     )
     .await?;
 
@@ -180,8 +176,8 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
-        authority2_token_escrow_number,
+        authority1_token_escrow_slot,
+        authority2_token_escrow_slot,
         1_000_000,
     )
     .await?;
@@ -207,7 +203,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority1,
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
     )
     .await?;
     process_token_escrow_undelegate(
@@ -216,7 +212,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &authority2,
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
     )
     .await?;
 
@@ -270,7 +266,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &destination_token,
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
         9_000_000,
     )
     .await?;
@@ -281,7 +277,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &destination_token,
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
         1_000_000,
     )
     .await?;

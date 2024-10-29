@@ -12,7 +12,7 @@ pub const DISCRIMINANT: [u8; 8] = [0x1c, 0x69, 0x76, 0xee, 0x37, 0xb8, 0xab, 0x4
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
     pub validator: Pubkey,
-    pub number: u64,
+    pub slot: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
@@ -33,7 +33,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the seeds of the escrow PDA
     let lamport_escrow_seeds =
-        lamport_escrow_seeds_generator!(authority.key, args.validator, args.number);
+        lamport_escrow_seeds_generator!(authority.key, args.validator, args.slot);
     ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized

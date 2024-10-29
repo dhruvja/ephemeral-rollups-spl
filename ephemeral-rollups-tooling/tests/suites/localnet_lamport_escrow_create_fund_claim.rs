@@ -4,13 +4,13 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use crate::api::program_wrap::process_lamport_escrow_claim::process_lamport_escrow_claim;
-use crate::api::program_wrap::process_lamport_escrow_create::process_lamport_escrow_create;
 use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 use crate::api::program_context::read_account::read_account_lamports;
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
+use crate::api::program_wrap::process_lamport_escrow_claim::process_lamport_escrow_claim;
+use crate::api::program_wrap::process_lamport_escrow_create::process_lamport_escrow_create;
 
 #[tokio::test]
 async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError> {
@@ -25,11 +25,11 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
     let destination = Keypair::new();
 
     // Lamport escrow account we will be using
-    let lamport_escrow_number = 42;
+    let lamport_escrow_slot = 42;
     let lamport_escrow_pda = LamportEscrow::generate_pda(
         &authority.pubkey(),
         &validator,
-        lamport_escrow_number,
+        lamport_escrow_slot,
         &ephemeral_rollups_wrap::id(),
     );
     let lamport_escrow_rent = program_context
@@ -57,7 +57,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &payer,
         &authority.pubkey(),
         &validator,
-        lamport_escrow_number,
+        lamport_escrow_slot,
     )
     .await?;
 
@@ -98,7 +98,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_number,
+        lamport_escrow_slot,
         2 * LAMPORTS_PER_SOL,
     )
     .await?;
@@ -120,7 +120,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_number,
+        lamport_escrow_slot,
         8 * LAMPORTS_PER_SOL,
     )
     .await?;
@@ -142,7 +142,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_number,
+        lamport_escrow_slot,
         0,
     )
     .await?;
@@ -164,7 +164,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_number,
+        lamport_escrow_slot,
         1,
     )
     .await

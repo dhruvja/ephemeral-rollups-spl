@@ -15,7 +15,7 @@ pub async fn process_token_escrow_withdraw(
     destination_token_account: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    number: u64,
+    slot: u64,
     amount: u64,
 ) -> Result<(), ProgramError> {
     let instruction = token_escrow_withdraw::instruction(
@@ -23,7 +23,7 @@ pub async fn process_token_escrow_withdraw(
         destination_token_account,
         validator,
         token_mint,
-        number,
+        slot,
         amount,
     );
     process_instruction_with_signer(program_context, instruction, payer, authority).await

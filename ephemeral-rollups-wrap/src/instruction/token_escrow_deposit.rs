@@ -15,12 +15,12 @@ pub fn instruction(
     authority: &Pubkey,
     validator: &Pubkey,
     token_mint: &Pubkey,
-    number: u64,
+    slot: u64,
     amount: u64,
 ) -> Instruction {
     let program_id = crate::id();
     let token_escrow_pda =
-        TokenEscrow::generate_pda(authority, validator, token_mint, number, &program_id);
+        TokenEscrow::generate_pda(authority, validator, token_mint, slot, &program_id);
     let token_vault_pda = token_vault_generate_pda(validator, token_mint, &program_id);
 
     let accounts = vec![
@@ -37,7 +37,7 @@ pub fn instruction(
         authority: *authority,
         validator: *validator,
         token_mint: *token_mint,
-        number,
+        slot,
         amount,
     }
     .serialize(&mut data)

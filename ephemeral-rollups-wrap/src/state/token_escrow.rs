@@ -24,11 +24,11 @@ impl TokenEscrow {
         authority: &Pubkey,
         validator: &Pubkey,
         token_mint: &Pubkey,
-        number: u64,
+        slot: u64,
         program_id: &Pubkey,
     ) -> Pubkey {
         Pubkey::find_program_address(
-            token_escrow_seeds_generator!(authority, validator, token_mint, number),
+            token_escrow_seeds_generator!(authority, validator, token_mint, slot),
             program_id,
         )
         .0
@@ -39,13 +39,13 @@ pub const TOKEN_ESCROW_SEEDS_PREFIX: &[u8] = b"token_escrow";
 
 #[macro_export]
 macro_rules! token_escrow_seeds_generator {
-    ($authority: expr, $validator: expr, $token_mint: expr, $number: expr) => {
+    ($authority: expr, $validator: expr, $token_mint: expr, $slot: expr) => {
         &[
             $crate::state::token_escrow::TOKEN_ESCROW_SEEDS_PREFIX,
             &$authority.to_bytes(),
             &$validator.to_bytes(),
             &$token_mint.to_bytes(),
-            &$number.to_le_bytes(),
+            &$slot.to_le_bytes(),
         ]
     };
 }

@@ -3,11 +3,6 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use crate::api::program_wrap::process_token_escrow_create::process_token_escrow_create;
-use crate::api::program_wrap::process_token_escrow_deposit::process_token_escrow_deposit;
-use crate::api::program_wrap::process_token_escrow_transfer::process_token_escrow_transfer;
-use crate::api::program_wrap::process_token_escrow_withdraw::process_token_escrow_withdraw;
-use crate::api::program_wrap::process_token_vault_init::process_token_vault_init;
 use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
@@ -15,6 +10,11 @@ use crate::api::program_context::read_account::read_account_borsh;
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
+use crate::api::program_wrap::process_token_escrow_create::process_token_escrow_create;
+use crate::api::program_wrap::process_token_escrow_deposit::process_token_escrow_deposit;
+use crate::api::program_wrap::process_token_escrow_transfer::process_token_escrow_transfer;
+use crate::api::program_wrap::process_token_escrow_withdraw::process_token_escrow_withdraw;
+use crate::api::program_wrap::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
 async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), ProgramError> {
@@ -67,20 +67,20 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
     .await?;
 
     // Escrow accounts we will be creating
-    let authority1_token_escrow_number = 99;
+    let authority1_token_escrow_slot = 99;
     let authority1_token_escrow_pda = TokenEscrow::generate_pda(
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
         &ephemeral_rollups_wrap::id(),
     );
-    let authority2_token_escrow_number = 42;
+    let authority2_token_escrow_slot = 42;
     let authority2_token_escrow_pda = TokenEscrow::generate_pda(
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
         &ephemeral_rollups_wrap::id(),
     );
 
@@ -100,7 +100,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
     )
     .await?;
 
@@ -121,7 +121,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
         10_000_000,
     )
     .await?;
@@ -143,7 +143,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
         90_000_000,
     )
     .await?;
@@ -163,7 +163,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
     )
     .await?;
 
@@ -183,8 +183,8 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
-        authority2_token_escrow_number,
+        authority1_token_escrow_slot,
+        authority2_token_escrow_slot,
         1_000_000,
     )
     .await?;
@@ -211,8 +211,8 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
-        authority2_token_escrow_number,
+        authority1_token_escrow_slot,
+        authority2_token_escrow_slot,
         99_000_000,
     )
     .await?;
@@ -239,8 +239,8 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
-        authority1_token_escrow_number,
+        authority2_token_escrow_slot,
+        authority1_token_escrow_slot,
         75_000_000,
     )
     .await?;
@@ -276,7 +276,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &destination_token,
         &validator,
         &token_mint.pubkey(),
-        authority1_token_escrow_number,
+        authority1_token_escrow_slot,
         75_000_000,
     )
     .await?;
@@ -289,7 +289,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &destination_token,
         &validator,
         &token_mint.pubkey(),
-        authority2_token_escrow_number,
+        authority2_token_escrow_slot,
         25_000_000,
     )
     .await?;
