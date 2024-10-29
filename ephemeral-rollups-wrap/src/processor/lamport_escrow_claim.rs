@@ -57,7 +57,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Wrap: Claimed from LamportEscrow");
-    msg!(" - authority: {} ({})", authority.key, args.slot);
+    msg!(" - authority: {} (slot: {})", authority.key, args.slot);
     msg!(" - validator: {}", args.validator);
     msg!(" - destination: {}", destination.key);
     msg!(

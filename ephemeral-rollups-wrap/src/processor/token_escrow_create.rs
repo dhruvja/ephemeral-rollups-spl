@@ -56,7 +56,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Wrap: Created a new TokenEscrow");
-    msg!(" - authority: {} ({})", args.authority, args.slot);
+    msg!(" - authority: {} (slot: {})", args.authority, args.slot);
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
 

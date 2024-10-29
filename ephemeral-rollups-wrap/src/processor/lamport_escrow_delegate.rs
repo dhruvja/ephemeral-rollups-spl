@@ -67,7 +67,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Log outcome
     msg!("Ephemeral Rollups Wrap: Delegated a LamportEscrow");
-    msg!(" - authority: {} ({})", authority.key, args.slot);
+    msg!(" - authority: {} (slot: {})", authority.key, args.slot);
     msg!(" - validator: {}", args.validator);
     msg!(" - lamports: {}", lamport_escrow_pda.lamports());
 

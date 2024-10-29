@@ -90,12 +90,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Log outcome
     msg!("Ephemeral Rollups Wrap: Transfered between TokenEscrow");
     msg!(
-        " - source_authority: {} ({})",
+        " - source_authority: {} (slot: {})",
         source_authority.key,
         args.source_slot
     );
     msg!(
-        " - destination_authority: {} ({})",
+        " - destination_authority: {} (slot: {})",
         args.destination_authority,
         args.destination_slot
     );
