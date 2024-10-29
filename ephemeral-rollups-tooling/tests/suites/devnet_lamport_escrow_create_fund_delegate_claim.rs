@@ -1,12 +1,12 @@
-use ephemeral_rollups_bridge::state::lamport_escrow::LamportEscrow;
+use ephemeral_rollups_wrap::state::lamport_escrow::LamportEscrow;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use crate::api::program_bridge::process_lamport_escrow_create::process_lamport_escrow_create;
-use crate::api::program_bridge::process_lamport_escrow_delegate::process_lamport_escrow_delegate;
+use crate::api::program_wrap::process_lamport_escrow_create::process_lamport_escrow_create;
+use crate::api::program_wrap::process_lamport_escrow_delegate::process_lamport_escrow_delegate;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 use crate::api::program_context::read_account::read_account_lamports;
@@ -30,13 +30,16 @@ async fn devnet_lamport_escrow_create_fund_delegate_claim() -> Result<(), Progra
         ));
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
-    let payer = Keypair::from_bytes(&[
+    let payer_chain = Keypair::from_bytes(&[
         243, 85, 166, 238, 237, 2, 46, 208, 68, 40, 98, 2, 148, 117, 134, 238, 144, 223, 165, 108,
         203, 120, 96, 89, 172, 223, 98, 26, 162, 92, 234, 167, 5, 201, 50, 82, 10, 153, 196, 60,
         132, 31, 123, 66, 63, 113, 122, 83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225,
         247, 70, 96,
     ])
     .map_err(|e| ProgramError::Signature(e.to_string()))?;
+
+    // Ephemeral dummy payer
+    let payer_ephem = Keypair::new();
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -49,7 +52,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_claim() -> Result<(), Progra
         &authority.pubkey(),
         &validator,
         lamport_escrow_number,
-        &ephemeral_rollups_bridge::id(),
+        &ephemeral_rollups_wrap::id(),
     );
     let lamport_escrow_rent = program_context_chain
         .get_rent_minimum_balance(LamportEscrow::space())
@@ -58,7 +61,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_claim() -> Result<(), Progra
     // Create a new lamport escrow
     process_lamport_escrow_create(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority.pubkey(),
         &validator,
         lamport_escrow_number,
@@ -68,8 +71,8 @@ async fn devnet_lamport_escrow_create_fund_delegate_claim() -> Result<(), Progra
     // Send some lamports to the escrow from somewhere
     process_system_transfer(
         &mut program_context_chain,
-        &payer,
-        &payer,
+        &payer_chain,
+        &payer_chain,
         &lamport_escrow_pda,
         1_000_000,
     )
@@ -78,7 +81,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_claim() -> Result<(), Progra
     // Delegate it immediately
     process_lamport_escrow_delegate(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority,
         &validator,
         lamport_escrow_number,

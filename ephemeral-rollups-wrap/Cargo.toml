@@ -1,11 +1,11 @@
 [package]
-name = "ephemeral-rollups-bridge"
+name = "ephemeral-rollups-wrap"
 version = "0.0.1"
-description = "Ephemeral Rollups Bridge"
+description = "Ephemeral Rollups Wrap"
 edition = "2021"
 
 [lib]
-name = "ephemeral_rollups_bridge"
+name = "ephemeral_rollups_wrap"
 crate-type = ["cdylib", "lib"]
 
 [features]

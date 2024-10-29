@@ -74,7 +74,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     )?;
 
     // Log outcome
-    msg!("Ephemeral Rollups Bridge: Withdrew from TokenEscrow");
+    msg!("Ephemeral Rollups Wrap: Withdrew from TokenEscrow");
     msg!(" - authority: {} ({})", authority.key, args.number);
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);

@@ -2,9 +2,9 @@
 
 This repository is aimed at providing implementations for very standard actions done in and out of the MagicBlock's Ephemeral Rollups engine's runtime.
 
-## Ephemeral Rollups Bridge
+## Ephemeral Rollups Wrap
 
-This crate provide an example implementation on how to bridge Lamports (SOL) and SPL Tokens in and out of the Ephemeral Rollups.
+This crate provide an example implementation on how to wrap/unwrap Lamports (SOL) and SPL Tokens in and out of the Ephemeral Rollups.
 
 ### Escrowing Lamports (SOL) in and out of the ER
 

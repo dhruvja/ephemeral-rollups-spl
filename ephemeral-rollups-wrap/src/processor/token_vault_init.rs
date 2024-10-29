@@ -53,7 +53,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], _data: &[u8]) -> P
     )?;
 
     // Log outcome
-    msg!("Ephemeral Rollups Bridge: Created a new vault for token mint");
+    msg!("Ephemeral Rollups Wrap: Created a new vault for token mint");
     msg!(" - validator: {}", validator.key);
     msg!(" - token_mint: {}", token_mint.key);
 

@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use ephemeral_rollups_bridge::state::token_escrow::TokenEscrow;
+use ephemeral_rollups_wrap::state::token_escrow::TokenEscrow;
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
@@ -8,13 +8,13 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use crate::api::program_bridge::process_token_escrow_create::process_token_escrow_create;
-use crate::api::program_bridge::process_token_escrow_delegate::process_token_escrow_delegate;
-use crate::api::program_bridge::process_token_escrow_deposit::process_token_escrow_deposit;
-use crate::api::program_bridge::process_token_escrow_transfer::process_token_escrow_transfer;
-use crate::api::program_bridge::process_token_escrow_undelegate::process_token_escrow_undelegate;
-use crate::api::program_bridge::process_token_escrow_withdraw::process_token_escrow_withdraw;
-use crate::api::program_bridge::process_token_vault_init::process_token_vault_init;
+use crate::api::program_wrap::process_token_escrow_create::process_token_escrow_create;
+use crate::api::program_wrap::process_token_escrow_delegate::process_token_escrow_delegate;
+use crate::api::program_wrap::process_token_escrow_deposit::process_token_escrow_deposit;
+use crate::api::program_wrap::process_token_escrow_transfer::process_token_escrow_transfer;
+use crate::api::program_wrap::process_token_escrow_undelegate::process_token_escrow_undelegate;
+use crate::api::program_wrap::process_token_escrow_withdraw::process_token_escrow_withdraw;
+use crate::api::program_wrap::process_token_vault_init::process_token_vault_init;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 use crate::api::program_context::read_account::{read_account_borsh, read_account_owner};
@@ -41,13 +41,17 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         ));
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
-    let payer = Keypair::from_bytes(&[
+    let payer_chain = Keypair::from_bytes(&[
         243, 85, 166, 238, 237, 2, 46, 208, 68, 40, 98, 2, 148, 117, 134, 238, 144, 223, 165, 108,
         203, 120, 96, 89, 172, 223, 98, 26, 162, 92, 234, 167, 5, 201, 50, 82, 10, 153, 196, 60,
         132, 31, 123, 66, 63, 113, 122, 83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225,
         247, 70, 96,
     ])
     .map_err(|e| ProgramError::Signature(e.to_string()))?;
+
+    // Ephemeral dummy payer
+    let payer_ephem = Keypair::new();
+    // TODO - we have to provide fee lamports later for payer in ER
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -62,7 +66,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     let token_mint = Keypair::new();
     process_token_mint_init(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &token_mint,
         6,
         &token_mint.pubkey(),
@@ -72,14 +76,14 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     // Airdrop token to our source wallet
     let source_token = process_associated_token_account_get_or_init(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &token_mint.pubkey(),
         &source.pubkey(),
     )
     .await?;
     process_token_mint_to(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &token_mint.pubkey(),
         &token_mint,
         &source_token,
@@ -94,7 +98,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &validator,
         &token_mint.pubkey(),
         authority1_token_escrow_number,
-        &ephemeral_rollups_bridge::id(),
+        &ephemeral_rollups_wrap::id(),
     );
     let authority2_token_escrow_number = 11;
     let authority2_token_escrow_pda = TokenEscrow::generate_pda(
@@ -102,13 +106,13 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &validator,
         &token_mint.pubkey(),
         authority2_token_escrow_number,
-        &ephemeral_rollups_bridge::id(),
+        &ephemeral_rollups_wrap::id(),
     );
 
     // Prepare being able to escrow this token mint for this validator
     process_token_vault_init(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &validator,
         &token_mint.pubkey(),
     )
@@ -117,7 +121,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     // Create all escrows
     process_token_escrow_create(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
@@ -126,7 +130,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     .await?;
     process_token_escrow_create(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
@@ -137,7 +141,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     // Fund the first escrow
     process_token_escrow_deposit(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &source,
         &source_token,
         &authority1.pubkey(),
@@ -151,7 +155,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     // Delegate all escrows
     process_token_escrow_delegate(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority1,
         &validator,
         &token_mint.pubkey(),
@@ -160,7 +164,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     .await?;
     process_token_escrow_delegate(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority2,
         &validator,
         &token_mint.pubkey(),
@@ -171,7 +175,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     // Do a transfer between the two escrow inside of the ER
     process_token_escrow_transfer(
         &mut program_context_ephem,
-        &payer, // TODO - we have to provide fee lamports later for payer
+        &payer_ephem,
         &authority1,
         &authority2.pubkey(),
         &validator,
@@ -199,7 +203,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     // Undelegate all escrows
     process_token_escrow_undelegate(
         &mut program_context_ephem,
-        &payer,
+        &payer_ephem,
         &authority1,
         &validator,
         &token_mint.pubkey(),
@@ -208,7 +212,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     .await?;
     process_token_escrow_undelegate(
         &mut program_context_ephem,
-        &payer,
+        &payer_ephem,
         &authority2,
         &validator,
         &token_mint.pubkey(),
@@ -254,14 +258,14 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     // Just for fun, we should now be able to withdraw funds on-chain
     let destination_token = process_associated_token_account_get_or_init(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &token_mint.pubkey(),
         &destination.pubkey(),
     )
     .await?;
     process_token_escrow_withdraw(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority1,
         &destination_token,
         &validator,
@@ -272,7 +276,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     .await?;
     process_token_escrow_withdraw(
         &mut program_context_chain,
-        &payer,
+        &payer_chain,
         &authority2,
         &destination_token,
         &validator,

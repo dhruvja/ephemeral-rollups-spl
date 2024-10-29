@@ -1,13 +1,13 @@
-use ephemeral_rollups_bridge::state::token_escrow::TokenEscrow;
+use ephemeral_rollups_wrap::state::token_escrow::TokenEscrow;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use crate::api::program_bridge::process_token_escrow_create::process_token_escrow_create;
-use crate::api::program_bridge::process_token_escrow_deposit::process_token_escrow_deposit;
-use crate::api::program_bridge::process_token_escrow_transfer::process_token_escrow_transfer;
-use crate::api::program_bridge::process_token_escrow_withdraw::process_token_escrow_withdraw;
-use crate::api::program_bridge::process_token_vault_init::process_token_vault_init;
+use crate::api::program_wrap::process_token_escrow_create::process_token_escrow_create;
+use crate::api::program_wrap::process_token_escrow_deposit::process_token_escrow_deposit;
+use crate::api::program_wrap::process_token_escrow_transfer::process_token_escrow_transfer;
+use crate::api::program_wrap::process_token_escrow_withdraw::process_token_escrow_withdraw;
+use crate::api::program_wrap::process_token_vault_init::process_token_vault_init;
 use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
@@ -73,7 +73,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &validator,
         &token_mint.pubkey(),
         authority1_token_escrow_number,
-        &ephemeral_rollups_bridge::id(),
+        &ephemeral_rollups_wrap::id(),
     );
     let authority2_token_escrow_number = 42;
     let authority2_token_escrow_pda = TokenEscrow::generate_pda(
@@ -81,7 +81,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &validator,
         &token_mint.pubkey(),
         authority2_token_escrow_number,
-        &ephemeral_rollups_bridge::id(),
+        &ephemeral_rollups_wrap::id(),
     );
 
     // Prepare being able to escrow token for this validator

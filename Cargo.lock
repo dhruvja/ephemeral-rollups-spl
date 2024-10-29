@@ -1326,16 +1326,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ephemeral-rollups-bridge"
-version = "0.0.1"
-dependencies = [
- "borsh 1.5.1",
- "ephemeral-rollups-sdk",
- "solana-program",
- "spl-token",
-]
-
-[[package]]
 name = "ephemeral-rollups-sdk"
 version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1376,14 +1366,24 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "borsh 1.5.1",
- "ephemeral-rollups-bridge",
  "ephemeral-rollups-sdk",
+ "ephemeral-rollups-wrap",
  "solana-client",
  "solana-program-test",
  "solana-sdk",
  "spl-associated-token-account",
  "spl-token",
  "tokio",
+]
+
+[[package]]
+name = "ephemeral-rollups-wrap"
+version = "0.0.1"
+dependencies = [
+ "borsh 1.5.1",
+ "ephemeral-rollups-sdk",
+ "solana-program",
+ "spl-token",
 ]
 
 [[package]]

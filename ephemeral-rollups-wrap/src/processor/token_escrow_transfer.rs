@@ -88,7 +88,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         .serialize(&mut &mut destination_token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
 
     // Log outcome
-    msg!("Ephemeral Rollups Bridge: Transfered between TokenEscrow");
+    msg!("Ephemeral Rollups Wrap: Transfered between TokenEscrow");
     msg!(
         " - source_authority: {} ({})",
         source_authority.key,

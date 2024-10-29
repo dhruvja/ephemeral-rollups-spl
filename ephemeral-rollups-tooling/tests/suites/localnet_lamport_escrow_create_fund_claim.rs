@@ -1,11 +1,11 @@
-use ephemeral_rollups_bridge::state::lamport_escrow::LamportEscrow;
+use ephemeral_rollups_wrap::state::lamport_escrow::LamportEscrow;
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use crate::api::program_bridge::process_lamport_escrow_claim::process_lamport_escrow_claim;
-use crate::api::program_bridge::process_lamport_escrow_create::process_lamport_escrow_create;
+use crate::api::program_wrap::process_lamport_escrow_claim::process_lamport_escrow_claim;
+use crate::api::program_wrap::process_lamport_escrow_create::process_lamport_escrow_create;
 use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
@@ -30,7 +30,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority.pubkey(),
         &validator,
         lamport_escrow_number,
-        &ephemeral_rollups_bridge::id(),
+        &ephemeral_rollups_wrap::id(),
     );
     let lamport_escrow_rent = program_context
         .get_rent_minimum_balance(LamportEscrow::space())

@@ -70,7 +70,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     token_escrow_data.serialize(&mut &mut token_escrow_pda.try_borrow_mut_data()?.as_mut())?;
 
     // Log outcome
-    msg!("Ephemeral Rollups Bridge: Deposited to TokenEscrow");
+    msg!("Ephemeral Rollups Wrap: Deposited to TokenEscrow");
     msg!(" - authority: {} ({})", args.authority, args.number);
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
