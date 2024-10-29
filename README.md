@@ -1,17 +1,17 @@
 # Ephemeral Rollups SPL
 
-This repository is aimed at providing implementations for very standard actions done in and out of the MagicBlock's Ephemeral Rollups engine's runtime.
+This repository is aimed at providing reference implementations for very standard actions done in and out of the MagicBlock's Ephemeral Rollups engine's runtime.
 
 ## Ephemeral Rollups Wrap
 
 This crate provide an example implementation on how to wrap/unwrap Lamports (SOL) and SPL Tokens in and out of the Ephemeral Rollups.
 
-### Escrowing Lamports (SOL) in and out of the ER
+### Moving Lamports (SOL) in and out of the ER
 
-For escrowing lamports, the following IX are provided:
+For escrowing/wrapping lamports, the following IX are provided:
 
 - `lamport_escrow_create` -> Create a new `LamportEscrow` account, holding escrowed lamports (is controlled by an "authority" wallet)
-- `lamport_escrow_claim` -> The "authority" wallet can withdraw the lamports contained in the `LamportEscrow` to somewhere else (can be used both on-chain and in the ER)
+- `lamport_escrow_claim` -> The "authority" wallet can withdraw the lamports contained in the `LamportEscrow` to any wallet (can be used both on-chain and in the ER)
 - `lamport_escrow_delegate` -> Delegate the `LamportEscrow` into the ER (becomes unusable on-chain)
 - `lamport_escrow_undelegate` -> Undelegate the `LamportEscrow` back out from the ER (becomes usable again on-chain)
 
@@ -23,9 +23,9 @@ A typical example workflow could like like this:
 4) `wallet1` can now claim all available lamports using `lamport_escrow_claim` from INSIDE the ER
 5) `lamport_escrow_undelegate` can optionally be called to be able to claim remaining lamports from the chain later
 
-### Escrowing SPL tokens in and out of the ER
+### Moving SPL tokens in and out of the ER
 
-For escrowing SPL tokens, the following IX are provided:
+For escrowing/wrapping SPL tokens, the following IX are provided:
 
 - `token_escrow_create` -> Create a new `TokenEscrow` account representing a wallet's escrowed token balance (controlled by an "authority" wallet)
 - `token_escrow_deposit` -> Deposit a SPL token account balance into a `TokenEscrow` previously created (can only be used on-chain)
