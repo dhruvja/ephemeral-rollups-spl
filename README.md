@@ -15,7 +15,7 @@ For escrowing/wrapping lamports, the following IX are provided:
 - `lamport_escrow_delegate` -> Delegate the `LamportEscrow` into the ER (becomes unusable on-chain)
 - `lamport_escrow_undelegate` -> Undelegate the `LamportEscrow` back out from the ER (becomes usable again on-chain)
 
-A typical example workflow could like like this:
+A typical example scenario could like like this:
 
 1) `lamport_escrow_create` is called, creating an `wallet1_lamport_escrow` owned by `wallet1` on-chain
 2) `wallet2` transfers lamports into the `wallet1_lamport_escrow`
@@ -34,7 +34,7 @@ For escrowing/wrapping SPL tokens, the following IX are provided:
 - `token_escrow_delegate` -> Delegate the `TokenEscrow` into the ER (becomes unusable on-chain)
 - `token_escrow_undelegate` -> Undelegate the `TokenEscrow` back out from the ER (becomes usable again on-chain)
 
-A typical example workflow could look like this:
+A typical example scenario could look like this:
 
 1) `token_escrow_create` is called on chain for `wallet1`, creating a `wallet1_token_escrow`
 2) `token_escrow_deposit` is called on chain, depositing some tokens into `wallet1_token_escrow`
@@ -48,3 +48,7 @@ A typical example workflow could look like this:
 ## Ephemeral Rollups Tooling
 
 This crate provide example tests and scenario that can be used to help understand how each instructions can be used.
+
+Checkout fully functional wrapping scenarios working on devnet:
+
+- [devnet_token_escrow_create_deposit_delegate_transfer_undelegate](https://github.com/magicblock-labs/ephemeral-rollups-spl/blob/main/ephemeral-rollups-tooling/tests/suites/devnet_token_escrow_create_deposit_delegate_transfer_undelegate.rs)
