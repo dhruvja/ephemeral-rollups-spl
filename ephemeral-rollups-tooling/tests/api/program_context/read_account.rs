@@ -21,6 +21,16 @@ pub async fn read_account_exists(
     Ok(program_context.get_account(address).await?.is_some())
 }
 
+pub async fn read_account_owner(
+    program_context: &mut Box<dyn ProgramContext>,
+    address: &Pubkey,
+) -> Result<Option<Pubkey>, ProgramError> {
+    Ok(program_context
+        .get_account(address)
+        .await?
+        .map(|account| account.owner))
+}
+
 pub async fn read_account_lamports(
     program_context: &mut Box<dyn ProgramContext>,
     address: &Pubkey,

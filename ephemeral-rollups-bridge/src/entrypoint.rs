@@ -1,10 +1,11 @@
+use ephemeral_rollups_sdk::consts::EXTERNAL_UNDELEGATE_DISCRIMINATOR;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
 use crate::processor::{
-    lamport_escrow_claim, lamport_escrow_create, lamport_escrow_delegate,
+    apply_undelegation, lamport_escrow_claim, lamport_escrow_create, lamport_escrow_delegate,
     lamport_escrow_undelegate, token_escrow_create, token_escrow_delegate, token_escrow_deposit,
     token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw, token_vault_init,
 };
@@ -59,6 +60,9 @@ fn process_instruction(
             token_escrow_withdraw::process(program_id, accounts, data)
         }
         token_vault_init::DISCRIMINANT => token_vault_init::process(program_id, accounts, data),
+        EXTERNAL_UNDELEGATE_DISCRIMINATOR => {
+            apply_undelegation::process(program_id, accounts, data)
+        }
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }

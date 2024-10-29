@@ -13,7 +13,7 @@ use crate::api::program_context::read_account::read_account_lamports;
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
 
 #[tokio::test]
-async fn localnet_lamport_escrow_create_transfer_claim() -> Result<(), ProgramError> {
+async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError> {
     let mut program_context: Box<dyn ProgramContext> =
         Box::new(create_program_test_context().await);
 

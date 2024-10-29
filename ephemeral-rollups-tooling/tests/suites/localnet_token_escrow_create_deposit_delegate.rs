@@ -44,7 +44,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
     .await?;
 
     // Airdrop token to our source wallet
-    let source_usdc = process_associated_token_account_get_or_init(
+    let source_token = process_associated_token_account_get_or_init(
         &mut program_context,
         &payer,
         &token_mint.pubkey(),
@@ -56,7 +56,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
         &payer,
         &token_mint.pubkey(),
         &token_mint,
-        &source_usdc,
+        &source_token,
         100_000_000,
     )
     .await?;
@@ -104,7 +104,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
         &mut program_context,
         &payer,
         &source,
-        &source_usdc,
+        &source_token,
         &authority.pubkey(),
         &validator,
         &token_mint.pubkey(),

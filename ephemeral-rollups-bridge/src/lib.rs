@@ -4,4 +4,4 @@ pub mod processor;
 pub mod state;
 pub mod util;
 
-solana_program::declare_id!("MB1cHWrpUyD3tq7odZrqFF1QCTpJN5CmJyRmMjNfedc");
+solana_program::declare_id!("Demo69NJ91G8AcYYCqe6mJHuMAmwxjTGjSLpLAqS6Q4D");

@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::account::Account;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -8,6 +10,7 @@ use solana_sdk::sysvar::Sysvar;
 use solana_sdk::transaction::Transaction;
 
 use async_trait::async_trait;
+use tokio::time::sleep;
 
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
@@ -43,7 +46,8 @@ impl ProgramContext for RpcClient {
             .send_transaction(&transaction)
             .await
             .map_err(ProgramError::Client)?;
-        println!("process_transaction signature:{:?}", signature);
+        println!("process_transaction signature: {:?}", signature);
+        let start = Instant::now();
         loop {
             let confirmed = self
                 .confirm_transaction(&signature)
@@ -52,6 +56,15 @@ impl ProgramContext for RpcClient {
             if confirmed {
                 break;
             }
+            let duration = start.elapsed();
+            println!(
+                "failed to confirm transaction (elapsed: {} ms)",
+                duration.as_millis()
+            );
+            if duration > Duration::from_secs(10) {
+                return Err(ProgramError::Custom("Timeout on awaiting confirmation"));
+            }
+            sleep(Duration::from_secs(1)).await;
         }
         Ok(())
     }

@@ -1,30 +1,56 @@
+use std::time::{Duration, Instant};
+
 use ephemeral_rollups_bridge::state::token_escrow::TokenEscrow;
+use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
 use crate::api::program_bridge::process_token_escrow_create::process_token_escrow_create;
+use crate::api::program_bridge::process_token_escrow_delegate::process_token_escrow_delegate;
 use crate::api::program_bridge::process_token_escrow_deposit::process_token_escrow_deposit;
 use crate::api::program_bridge::process_token_escrow_transfer::process_token_escrow_transfer;
+use crate::api::program_bridge::process_token_escrow_undelegate::process_token_escrow_undelegate;
 use crate::api::program_bridge::process_token_escrow_withdraw::process_token_escrow_withdraw;
 use crate::api::program_bridge::process_token_vault_init::process_token_vault_init;
-use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::read_account_borsh;
+use crate::api::program_context::read_account::{read_account_borsh, read_account_owner};
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
 
 #[tokio::test]
-async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), ProgramError> {
-    let mut program_context: Box<dyn ProgramContext> =
-        Box::new(create_program_test_context().await);
+async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
+) -> Result<(), ProgramError> {
+    let mut program_context_chain: Box<dyn ProgramContext> =
+        Box::new(RpcClient::new_with_commitment(
+            "https://api.devnet.solana.com".to_string(),
+            CommitmentConfig {
+                commitment: CommitmentLevel::Confirmed,
+            },
+        ));
+    let mut program_context_ephem: Box<dyn ProgramContext> =
+        Box::new(RpcClient::new_with_commitment(
+            "https://devnet.magicblock.app".to_string(),
+            CommitmentConfig {
+                commitment: CommitmentLevel::Confirmed,
+            },
+        ));
+
+    // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
+    let payer = Keypair::from_bytes(&[
+        243, 85, 166, 238, 237, 2, 46, 208, 68, 40, 98, 2, 148, 117, 134, 238, 144, 223, 165, 108,
+        203, 120, 96, 89, 172, 223, 98, 26, 162, 92, 234, 167, 5, 201, 50, 82, 10, 153, 196, 60,
+        132, 31, 123, 66, 63, 113, 122, 83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225,
+        247, 70, 96,
+    ])
+    .map_err(|e| ProgramError::Signature(e.to_string()))?;
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
-
-    let payer = Keypair::new();
 
     let authority1 = Keypair::new();
     let authority2 = Keypair::new();
@@ -32,15 +58,10 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
     let source = Keypair::new();
     let destination = Keypair::new();
 
-    // Fund payer
-    program_context
-        .process_airdrop(&payer.pubkey(), 1_000_000_000_000)
-        .await?;
-
     // Create token mint
     let token_mint = Keypair::new();
     process_token_mint_init(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &token_mint,
         6,
@@ -50,14 +71,14 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
 
     // Airdrop token to our source wallet
     let source_token = process_associated_token_account_get_or_init(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &token_mint.pubkey(),
         &source.pubkey(),
     )
     .await?;
     process_token_mint_to(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &token_mint.pubkey(),
         &token_mint,
@@ -75,7 +96,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         authority1_token_escrow_number,
         &ephemeral_rollups_bridge::id(),
     );
-    let authority2_token_escrow_number = 42;
+    let authority2_token_escrow_number = 11;
     let authority2_token_escrow_pda = TokenEscrow::generate_pda(
         &authority2.pubkey(),
         &validator,
@@ -84,18 +105,18 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &ephemeral_rollups_bridge::id(),
     );
 
-    // Prepare being able to escrow token for this validator
+    // Prepare being able to escrow this token mint for this validator
     process_token_vault_init(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &validator,
         &token_mint.pubkey(),
     )
     .await?;
 
-    // Create an escrow
+    // Create all escrows
     process_token_escrow_create(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &authority1.pubkey(),
         &validator,
@@ -103,18 +124,19 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         authority1_token_escrow_number,
     )
     .await?;
+    process_token_escrow_create(
+        &mut program_context_chain,
+        &payer,
+        &authority2.pubkey(),
+        &validator,
+        &token_mint.pubkey(),
+        authority2_token_escrow_number,
+    )
+    .await?;
 
-    // No balance yet
-    assert_eq!(
-        0,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
-            .await?
-            .amount
-    );
-
-    // Fund the escrow
+    // Fund the first escrow
     process_token_escrow_deposit(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &source,
         &source_token,
@@ -126,171 +148,137 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
     )
     .await?;
 
-    // New balance
-    assert_eq!(
-        10_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
-            .await?
-            .amount
-    );
-
-    // Fund the escrow some more
-    process_token_escrow_deposit(
-        &mut program_context,
-        &payer,
-        &source,
-        &source_token,
-        &authority1.pubkey(),
-        &validator,
-        &token_mint.pubkey(),
-        authority1_token_escrow_number,
-        90_000_000,
-    )
-    .await?;
-
-    // New balance
-    assert_eq!(
-        100_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
-            .await?
-            .amount
-    );
-
-    // Create a different escrow (but this one is unfunded)
-    process_token_escrow_create(
-        &mut program_context,
-        &payer,
-        &authority2.pubkey(),
-        &validator,
-        &token_mint.pubkey(),
-        authority2_token_escrow_number,
-    )
-    .await?;
-
-    // New escrow
-    assert_eq!(
-        0,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
-            .await?
-            .amount
-    );
-
-    // Transfer some from 1->2
-    process_token_escrow_transfer(
-        &mut program_context,
+    // Delegate all escrows
+    process_token_escrow_delegate(
+        &mut program_context_chain,
         &payer,
         &authority1,
-        &authority2.pubkey(),
         &validator,
         &token_mint.pubkey(),
         authority1_token_escrow_number,
-        authority2_token_escrow_number,
-        1_000_000,
     )
     .await?;
-
-    // Transfer success should be reflected in the balances
-    assert_eq!(
-        99_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
-            .await?
-            .amount
-    );
-    assert_eq!(
-        1_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
-            .await?
-            .amount
-    );
-
-    // Transfer all remaining from 1->2
-    process_token_escrow_transfer(
-        &mut program_context,
-        &payer,
-        &authority1,
-        &authority2.pubkey(),
-        &validator,
-        &token_mint.pubkey(),
-        authority1_token_escrow_number,
-        authority2_token_escrow_number,
-        99_000_000,
-    )
-    .await?;
-
-    // Transfer success should be reflected in the balances
-    assert_eq!(
-        0,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
-            .await?
-            .amount
-    );
-    assert_eq!(
-        100_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
-            .await?
-            .amount
-    );
-
-    // Transfer back most of it back 2->1
-    process_token_escrow_transfer(
-        &mut program_context,
+    process_token_escrow_delegate(
+        &mut program_context_chain,
         &payer,
         &authority2,
-        &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
         authority2_token_escrow_number,
-        authority1_token_escrow_number,
-        75_000_000,
     )
     .await?;
 
-    // Transfer success should be reflected in the balances
+    // Do a transfer between the two escrow inside of the ER
+    process_token_escrow_transfer(
+        &mut program_context_ephem,
+        &payer, // TODO - we have to provide fee lamports later for payer
+        &authority1,
+        &authority2.pubkey(),
+        &validator,
+        &token_mint.pubkey(),
+        authority1_token_escrow_number,
+        authority2_token_escrow_number,
+        1_000_000,
+    )
+    .await?;
+
+    // Transfer success should be reflected in the balances inside the ER
     assert_eq!(
-        75_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority1_token_escrow_pda)
+        9_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context_ephem, &authority1_token_escrow_pda)
             .await?
             .amount
     );
     assert_eq!(
-        25_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority2_token_escrow_pda)
+        1_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context_ephem, &authority2_token_escrow_pda)
             .await?
             .amount
     );
 
-    // Withdraw everything after that
+    // Undelegate all escrows
+    process_token_escrow_undelegate(
+        &mut program_context_ephem,
+        &payer,
+        &authority1,
+        &validator,
+        &token_mint.pubkey(),
+        authority1_token_escrow_number,
+    )
+    .await?;
+    process_token_escrow_undelegate(
+        &mut program_context_ephem,
+        &payer,
+        &authority2,
+        &validator,
+        &token_mint.pubkey(),
+        authority2_token_escrow_number,
+    )
+    .await?;
+
+    // Wait for undelegations to succeed (we could alternatively subscribe to the accounts/programs/logs involved)
+    let start = Instant::now();
+    loop {
+        let authority1_token_escrow_owner =
+            read_account_owner(&mut program_context_chain, &authority1_token_escrow_pda)
+                .await?
+                .unwrap_or_default();
+        let authority2_token_escrow_owner =
+            read_account_owner(&mut program_context_chain, &authority2_token_escrow_pda)
+                .await?
+                .unwrap_or_default();
+        if authority1_token_escrow_owner != DELEGATION_PROGRAM_ID
+            && authority2_token_escrow_owner != DELEGATION_PROGRAM_ID
+        {
+            break;
+        }
+        if start.elapsed() > Duration::from_secs(10) {
+            return Err(ProgramError::Custom("Undelegation timeout"));
+        }
+    }
+
+    // Transfer success should be reflected in the balances on the chain
+    assert_eq!(
+        9_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context_chain, &authority1_token_escrow_pda)
+            .await?
+            .amount
+    );
+    assert_eq!(
+        1_000_000,
+        read_account_borsh::<TokenEscrow>(&mut program_context_chain, &authority2_token_escrow_pda)
+            .await?
+            .amount
+    );
+
+    // Just for fun, we should now be able to withdraw funds on-chain
     let destination_token = process_associated_token_account_get_or_init(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &token_mint.pubkey(),
         &destination.pubkey(),
     )
     .await?;
-
-    // There should be most of it in the first escrow
     process_token_escrow_withdraw(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &authority1,
         &destination_token,
         &validator,
         &token_mint.pubkey(),
         authority1_token_escrow_number,
-        75_000_000,
+        9_000_000,
     )
     .await?;
-
-    // And there should be exactly the remaining amount in the other one
     process_token_escrow_withdraw(
-        &mut program_context,
+        &mut program_context_chain,
         &payer,
         &authority2,
         &destination_token,
         &validator,
         &token_mint.pubkey(),
         authority2_token_escrow_number,
-        25_000_000,
+        1_000_000,
     )
     .await?;
 
