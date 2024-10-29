@@ -286,9 +286,9 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     )
     .await?;
 
-    // Verify that the on-chain destination token account now has all funds
+    // Verify that the on-chain destination token account now has our tokens
     assert_eq!(
-        10_000_001,
+        10_000_000,
         read_account_packed::<Account>(&mut program_context_chain, &destination_token)
             .await?
             .amount

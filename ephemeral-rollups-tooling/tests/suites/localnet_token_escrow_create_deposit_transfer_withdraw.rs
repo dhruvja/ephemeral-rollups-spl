@@ -2,11 +2,12 @@ use ephemeral_rollups_wrap::state::token_escrow::TokenEscrow;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use spl_token::state::Account;
 
 use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::read_account_borsh;
+use crate::api::program_context::read_account::{read_account_borsh, read_account_packed};
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
@@ -293,6 +294,14 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         25_000_000,
     )
     .await?;
+
+    // Verify that the on-chain destination token account now has our tokens
+    assert_eq!(
+        100_000_000,
+        read_account_packed::<Account>(&mut program_context, &destination_token)
+            .await?
+            .amount
+    );
 
     // Done
     Ok(())
