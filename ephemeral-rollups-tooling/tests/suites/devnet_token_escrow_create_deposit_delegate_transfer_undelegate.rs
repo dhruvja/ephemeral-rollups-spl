@@ -7,10 +7,13 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use spl_token::state::Account;
 
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::{read_account_borsh, read_account_owner};
+use crate::api::program_context::read_account::{
+    read_account_borsh, read_account_owner, read_account_packed,
+};
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
@@ -83,7 +86,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &token_mint.pubkey(),
         &token_mint,
         &source_token,
-        100_000_000,
+        10_000_000,
     )
     .await?;
 
@@ -259,6 +262,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &destination.pubkey(),
     )
     .await?;
+
     process_token_escrow_withdraw(
         &mut program_context_chain,
         &payer_chain,
@@ -281,6 +285,14 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         1_000_000,
     )
     .await?;
+
+    // Verify that the on-chain destination token account now has all funds
+    assert_eq!(
+        10_000_001,
+        read_account_packed::<Account>(&mut program_context_chain, &destination_token)
+            .await?
+            .amount
+    );
 
     // Done
     Ok(())
