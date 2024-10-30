@@ -22,7 +22,7 @@ pub async fn process_associated_token_account_get_or_init(
             &payer.pubkey(),
             wallet,
             mint,
-            &spl_token::id(),
+            &spl_token::ID,
         );
     process_instruction(program_context, instruction, payer).await?;
     Ok(pda)

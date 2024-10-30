@@ -9,7 +9,7 @@ default = []
 
 [dev-dependencies]
 ephemeral-rollups-sdk = "0.0.7"
-ephemeral-rollups-wrap = { path = "../ephemeral-rollups-wrap" }
+ephemeral-rollups-wrapper = { path = "../ephemeral-rollups-wrapper" }
 
 async-trait = "0.1.73"
 

@@ -13,7 +13,7 @@ pub fn instruction(
     validator: &Pubkey,
     slot: u64,
 ) -> Instruction {
-    let program_id = crate::id();
+    let program_id = crate::ID;
     let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, slot, &program_id);
 
     let accounts = vec![

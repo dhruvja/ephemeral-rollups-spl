@@ -7,7 +7,7 @@ use solana_program::{
 use crate::{processor::token_vault_init, state::token_vault::token_vault_generate_pda};
 
 pub fn instruction(payer: &Pubkey, validator: &Pubkey, token_mint: &Pubkey) -> Instruction {
-    let program_id = crate::id();
+    let program_id = crate::ID;
     let token_vault_pda = token_vault_generate_pda(validator, token_mint, &program_id);
 
     let accounts = vec![
@@ -15,8 +15,8 @@ pub fn instruction(payer: &Pubkey, validator: &Pubkey, token_mint: &Pubkey) -> I
         AccountMeta::new_readonly(*validator, false),
         AccountMeta::new_readonly(*token_mint, false),
         AccountMeta::new(token_vault_pda, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(spl_token::ID, false),
+        AccountMeta::new_readonly(system_program::ID, false),
     ];
 
     let mut data = Vec::new();

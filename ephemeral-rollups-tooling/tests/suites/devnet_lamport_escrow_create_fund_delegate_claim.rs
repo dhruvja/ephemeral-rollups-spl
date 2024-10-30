@@ -50,7 +50,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_claim() -> Result<(), Progra
         &authority.pubkey(),
         &validator,
         lamport_escrow_slot,
-        &ephemeral_rollups_wrapper::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
     /*
        let lamport_escrow_rent = program_context_chain

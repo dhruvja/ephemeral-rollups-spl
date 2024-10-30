@@ -7,6 +7,19 @@ pub fn ensure_is_signer(account: &AccountInfo) -> Result<(), ProgramError> {
     Ok(())
 }
 
+pub fn ensure_is_program_id(
+    account: &AccountInfo,
+    program_id: &Pubkey,
+) -> Result<(), ProgramError> {
+    if account.key.ne(program_id) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+    if !account.executable {
+        return Err(ProgramError::InvalidArgument);
+    }
+    Ok(())
+}
+
 pub fn ensure_is_owned_by_program(
     account: &AccountInfo,
     program_id: &Pubkey,

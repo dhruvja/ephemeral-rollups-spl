@@ -17,7 +17,7 @@ pub fn instruction(
     slot: u64,
     amount: u64,
 ) -> Instruction {
-    let program_id = crate::id();
+    let program_id = crate::ID;
 
     let token_escrow_pda =
         TokenEscrow::generate_pda(authority, validator, token_mint, slot, &program_id);
@@ -28,7 +28,7 @@ pub fn instruction(
         AccountMeta::new(*destination_token_account, false),
         AccountMeta::new(token_escrow_pda, false),
         AccountMeta::new(token_vault_pda, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_token::ID, false),
     ];
 
     let mut data = Vec::new();

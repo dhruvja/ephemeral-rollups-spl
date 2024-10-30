@@ -68,7 +68,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
         &validator,
         &token_mint.pubkey(),
         authority_token_escrow_slot,
-        &ephemeral_rollups_wrapper::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
 
     // Prepare being able to escrow token for this validator

@@ -1,12 +1,15 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_sdk::cpi::delegate_account;
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use solana_program::{msg, system_program};
 
 use crate::state::token_escrow::TokenEscrow;
 use crate::token_escrow_seeds_generator;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::ensure::{
+    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
+};
 
 pub const DISCRIMINANT: [u8; 8] = [0xc6, 0xd6, 0x5c, 0x5f, 0xf8, 0xcc, 0xe0, 0x2c];
 
@@ -25,6 +28,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
+
+    // Verify the programs
+    ensure_is_program_id(delegation_program_id, &DELEGATION_PROGRAM_ID)?;
+    ensure_is_program_id(owner_program_id, &program_id)?;
+    ensure_is_program_id(system_program_id, &system_program::ID)?;
 
     // Verify that the payer is allowed to pay for the rent fees
     ensure_is_signer(payer)?;

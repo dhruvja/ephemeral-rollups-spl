@@ -17,7 +17,7 @@ pub fn instruction(
     validator: &Pubkey,
     slot: u64,
 ) -> Instruction {
-    let program_id = crate::id();
+    let program_id = crate::ID;
     let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, slot, &program_id);
 
     let delegation_buffer_pda =
@@ -36,7 +36,7 @@ pub fn instruction(
         AccountMeta::new(delegation_metadata_pda, false),
         AccountMeta::new_readonly(delegation_program_id, false),
         AccountMeta::new_readonly(program_id, false),
-        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(system_program::ID, false),
     ];
 
     let mut data = Vec::new();

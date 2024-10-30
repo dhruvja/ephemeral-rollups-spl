@@ -74,7 +74,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &validator,
         &token_mint.pubkey(),
         authority1_token_escrow_slot,
-        &ephemeral_rollups_wrapper::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
     let authority2_token_escrow_slot = 42;
     let authority2_token_escrow_pda = TokenEscrow::generate_pda(
@@ -82,7 +82,7 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
         &validator,
         &token_mint.pubkey(),
         authority2_token_escrow_slot,
-        &ephemeral_rollups_wrapper::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
 
     // Prepare being able to escrow token for this validator

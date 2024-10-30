@@ -6,7 +6,9 @@ use solana_program::{msg, system_program};
 use crate::state::token_escrow::TokenEscrow;
 use crate::token_escrow_seeds_generator;
 use crate::util::create::create_pda;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::ensure::{
+    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
+};
 
 pub const DISCRIMINANT: [u8; 8] = [0xfe, 0x25, 0x5a, 0x94, 0x2e, 0x8e, 0x50, 0xac];
 
@@ -24,6 +26,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
+
+    // Verify the programs
+    ensure_is_program_id(system_program_id, &system_program::ID)?;
 
     // Verify that the payer is allowed to pay for the rent fees
     ensure_is_signer(payer)?;

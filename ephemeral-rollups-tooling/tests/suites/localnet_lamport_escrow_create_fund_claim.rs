@@ -30,7 +30,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority.pubkey(),
         &validator,
         lamport_escrow_slot,
-        &ephemeral_rollups_wrapper::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
     let lamport_escrow_rent = program_context
         .get_rent_minimum_balance(LamportEscrow::space())

@@ -8,7 +8,7 @@ pub async fn create_program_test_context() -> ProgramTestContext {
     program_test.add_program("./binaries/dlp", DELEGATION_PROGRAM_ID, None);
     program_test.add_program(
         "../target/deploy/ephemeral_rollups_wrapper",
-        ephemeral_rollups_wrapper::id(),
+        ephemeral_rollups_wrapper::ID,
         None,
     );
     program_test.start_with_context().await

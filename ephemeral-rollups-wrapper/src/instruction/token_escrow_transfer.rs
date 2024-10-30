@@ -15,7 +15,7 @@ pub fn instruction(
     destination_slot: u64,
     amount: u64,
 ) -> Instruction {
-    let program_id = crate::id();
+    let program_id = crate::ID;
 
     let source_token_escrow_pda = TokenEscrow::generate_pda(
         source_authority,

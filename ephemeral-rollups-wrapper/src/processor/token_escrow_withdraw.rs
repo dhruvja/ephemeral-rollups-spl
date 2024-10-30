@@ -6,7 +6,9 @@ use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubke
 use spl_token::instruction::transfer;
 
 use crate::state::token_escrow::TokenEscrow;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::ensure::{
+    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
+};
 use crate::util::signer::signer_seeds;
 use crate::{token_escrow_seeds_generator, token_vault_seeds_generator};
 
@@ -28,6 +30,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
+
+    // Verify the programs
+    ensure_is_program_id(token_program_id, &spl_token::ID)?;
 
     // Verify that the authority user is indeed the one initiating this IX
     ensure_is_signer(authority)?;

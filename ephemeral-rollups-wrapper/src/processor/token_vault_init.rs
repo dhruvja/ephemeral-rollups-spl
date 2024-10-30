@@ -8,7 +8,9 @@ use spl_token::state::Account;
 
 use crate::token_vault_seeds_generator;
 use crate::util::create::create_pda;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::ensure::{
+    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
+};
 
 pub const DISCRIMINANT: [u8; 8] = [0x70, 0xfe, 0x66, 0x40, 0x47, 0x49, 0x16, 0x0e];
 
@@ -19,6 +21,10 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], _data: &[u8]) -> P
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
+
+    // Verify the programs
+    ensure_is_program_id(token_program_id, &spl_token::ID)?;
+    ensure_is_program_id(system_program_id, &system_program::ID)?;
 
     // Verify that the payer is allowed to pay for the rent fees
     ensure_is_signer(payer)?;

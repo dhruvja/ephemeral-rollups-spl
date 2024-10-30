@@ -5,9 +5,10 @@ use solana_program::{
 };
 
 use crate::processor::{
-    apply_undelegation, lamport_escrow_claim, lamport_escrow_create, lamport_escrow_delegate,
-    lamport_escrow_undelegate, token_escrow_create, token_escrow_delegate, token_escrow_deposit,
-    token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw, token_vault_init,
+    apply_undelegation, bubblegum_escrow_create, lamport_escrow_claim, lamport_escrow_create,
+    lamport_escrow_delegate, lamport_escrow_undelegate, token_escrow_create, token_escrow_delegate,
+    token_escrow_deposit, token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw,
+    token_vault_init,
 };
 
 fn process_instruction(
@@ -15,7 +16,7 @@ fn process_instruction(
     accounts: &[AccountInfo],
     data: &[u8],
 ) -> ProgramResult {
-    if program_id.ne(&crate::id()) {
+    if program_id.ne(&crate::ID) {
         return Err(ProgramError::IncorrectProgramId);
     }
 
@@ -29,6 +30,9 @@ fn process_instruction(
         .map_err(|_| ProgramError::InvalidInstructionData)?;
 
     match tag_array {
+        bubblegum_escrow_create::DISCRIMINANT => {
+            bubblegum_escrow_create::process(program_id, accounts, data)
+        }
         lamport_escrow_create::DISCRIMINANT => {
             lamport_escrow_create::process(program_id, accounts, data)
         }

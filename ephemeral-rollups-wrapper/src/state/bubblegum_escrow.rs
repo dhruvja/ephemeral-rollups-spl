@@ -8,6 +8,7 @@ use crate::bubblegum_escrow_seeds_generator;
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct BubblegumEscrow {
     pub discriminant: u64,
+    pub authority: Pubkey,
 }
 
 impl BubblegumEscrow {
@@ -16,31 +17,25 @@ impl BubblegumEscrow {
     }
 
     pub fn space() -> usize {
-        size_of::<u64>() + size_of::<u64>()
+        size_of::<u64>() + size_of::<Pubkey>()
     }
 
-    pub fn generate_pda(
-        authority: &Pubkey,
-        validator: &Pubkey,
-        asset_id: &Pubkey,
-        program_id: &Pubkey,
-    ) -> Pubkey {
+    pub fn generate_pda(validator: &Pubkey, asset: &Pubkey, program_id: &Pubkey) -> Pubkey {
         Pubkey::find_program_address(
-            bubblegum_escrow_seeds_generator!(authority, validator, asset_id),
+            bubblegum_escrow_seeds_generator!(validator, asset),
             program_id,
         )
         .0
     }
 }
 
-pub const CNFT_ESCROW_SEEDS_PREFIX: &[u8] = b"cnft_escrow";
+pub const BUBBLEGUM_ESCROW_SEEDS_PREFIX: &[u8] = b"bubblegum_escrow";
 
 #[macro_export]
 macro_rules! bubblegum_escrow_seeds_generator {
-    ($authority: expr, $validator: expr, $asset_id: expr) => {
+    ($validator: expr, $asset_id: expr) => {
         &[
-            $crate::state::bubblegum_escrow::CNFT_ESCROW_SEEDS_PREFIX,
-            &$authority.to_bytes(),
+            $crate::state::bubblegum_escrow::BUBBLEGUM_ESCROW_SEEDS_PREFIX,
             &$validator.to_bytes(),
             &$asset_id.to_bytes(),
         ]

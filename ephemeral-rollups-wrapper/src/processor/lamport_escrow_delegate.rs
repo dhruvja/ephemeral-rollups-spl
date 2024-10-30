@@ -1,12 +1,15 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_sdk::cpi::delegate_account;
-use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use solana_program::{msg, system_program};
 
 use crate::lamport_escrow_seeds_generator;
 use crate::state::lamport_escrow::LamportEscrow;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::ensure::{
+    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
+};
 
 pub const DISCRIMINANT: [u8; 8] = [0x98, 0xe4, 0x41, 0xd1, 0x81, 0xb6, 0xc9, 0x3b];
 
@@ -24,6 +27,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
+
+    // Verify the programs
+    ensure_is_program_id(delegation_program_id, &DELEGATION_PROGRAM_ID)?;
+    ensure_is_program_id(owner_program_id, &program_id)?;
+    ensure_is_program_id(system_program_id, &system_program::ID)?;
 
     // Verify that the payer is allowed to pay for the rent fees
     ensure_is_signer(payer)?;
@@ -43,11 +51,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     let lamport_escrow_data = LamportEscrow::try_from_slice(&lamport_escrow_pda.data.borrow())?;
     if lamport_escrow_data.discriminant != LamportEscrow::discriminant() {
         return Err(ProgramError::InvalidAccountData);
-    }
-
-    // Verify that the owner_program_id account passed as parameter is valid
-    if owner_program_id.key.ne(program_id) {
-        return Err(ProgramError::IncorrectProgramId);
     }
 
     // Delegate the escrow, relinquish control on chain (it will become claimable in the Ephem)

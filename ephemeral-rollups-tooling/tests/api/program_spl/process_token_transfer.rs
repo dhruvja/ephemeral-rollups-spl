@@ -16,7 +16,7 @@ pub async fn process_token_transfer(
     amount: u64,
 ) -> Result<(), ProgramError> {
     let instruction = transfer(
-        &spl_token::id(),
+        &spl_token::ID,
         source_account,
         destination_account,
         &authority.pubkey(),
