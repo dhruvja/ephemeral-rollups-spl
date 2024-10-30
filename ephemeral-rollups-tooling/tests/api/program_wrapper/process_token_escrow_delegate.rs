@@ -2,27 +2,26 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use ephemeral_rollups_wrap::instruction::lamport_escrow_claim;
+use ephemeral_rollups_wrapper::instruction::token_escrow_delegate;
 
 use crate::api::program_context::process_instruction::process_instruction_with_signer;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 
-pub async fn process_lamport_escrow_claim(
+pub async fn process_token_escrow_delegate(
     program_context: &mut Box<dyn ProgramContext>,
     payer: &Keypair,
     authority: &Keypair,
-    destination: &Pubkey,
     validator: &Pubkey,
+    token_mint: &Pubkey,
     slot: u64,
-    lamports: u64,
 ) -> Result<(), ProgramError> {
-    let instruction = lamport_escrow_claim::instruction(
+    let instruction = token_escrow_delegate::instruction(
+        &payer.pubkey(),
         &authority.pubkey(),
-        destination,
         validator,
+        token_mint,
         slot,
-        lamports,
     );
     process_instruction_with_signer(program_context, instruction, payer, authority).await
 }

@@ -1,4 +1,4 @@
-use ephemeral_rollups_wrap::state::lamport_escrow::LamportEscrow;
+use ephemeral_rollups_wrapper::state::lamport_escrow::LamportEscrow;
 use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -9,8 +9,8 @@ use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 use crate::api::program_context::read_account::read_account_lamports;
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
-use crate::api::program_wrap::process_lamport_escrow_create::process_lamport_escrow_create;
-use crate::api::program_wrap::process_lamport_escrow_delegate::process_lamport_escrow_delegate;
+use crate::api::program_wrapper::process_lamport_escrow_create::process_lamport_escrow_create;
+use crate::api::program_wrapper::process_lamport_escrow_delegate::process_lamport_escrow_delegate;
 
 #[tokio::test]
 async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), ProgramError> {
@@ -29,7 +29,7 @@ async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), ProgramErr
         &authority.pubkey(),
         &validator,
         lamport_escrow_slot,
-        &ephemeral_rollups_wrap::id(),
+        &ephemeral_rollups_wrapper::id(),
     );
     let lamport_escrow_rent = program_context
         .get_rent_minimum_balance(LamportEscrow::space())

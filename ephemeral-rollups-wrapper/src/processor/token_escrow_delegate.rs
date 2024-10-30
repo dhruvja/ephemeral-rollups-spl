@@ -67,7 +67,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     )?;
 
     // Log outcome
-    msg!("Ephemeral Rollups Wrap: Delegated a TokenEscrow");
+    msg!("Ephemeral Rollups Wrapper: Delegated a TokenEscrow");
     msg!(" - authority: {} (slot: {})", authority.key, args.slot);
     msg!(" - validator: {}", args.validator);
     msg!(" - token_mint: {}", args.token_mint);
