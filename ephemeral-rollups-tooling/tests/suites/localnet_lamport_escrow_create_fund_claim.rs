@@ -25,14 +25,14 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
     let destination = Keypair::new();
 
     // Lamport escrow account we will be using
-    let lamport_escrow_slot = 42;
-    let lamport_escrow_pda = LamportEscrow::generate_pda(
+    let authority_lamport_escrow_slot = 42;
+    let authority_lamport_escrow_pda = LamportEscrow::generate_pda(
         &authority.pubkey(),
         &validator,
-        lamport_escrow_slot,
+        authority_lamport_escrow_slot,
         &ephemeral_rollups_wrapper::ID,
     );
-    let lamport_escrow_rent = program_context
+    let authority_lamport_escrow_rent = program_context
         .get_rent_minimum_balance(LamportEscrow::space())
         .await?;
 
@@ -44,7 +44,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
     // Before anything happened
     assert_eq!(
         0,
-        read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
+        read_account_lamports(&mut program_context, &authority_lamport_escrow_pda).await?
     );
     assert_eq!(
         0,
@@ -57,14 +57,14 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &payer,
         &authority.pubkey(),
         &validator,
-        lamport_escrow_slot,
+        authority_lamport_escrow_slot,
     )
     .await?;
 
     // After the escrow is created
     assert_eq!(
-        lamport_escrow_rent,
-        read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
+        authority_lamport_escrow_rent,
+        read_account_lamports(&mut program_context, &authority_lamport_escrow_pda).await?
     );
     assert_eq!(
         0,
@@ -76,15 +76,15 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &mut program_context,
         &payer,
         &payer,
-        &lamport_escrow_pda,
+        &authority_lamport_escrow_pda,
         10 * LAMPORTS_PER_SOL,
     )
     .await?;
 
     // After the escrow is funded
     assert_eq!(
-        lamport_escrow_rent + 10 * LAMPORTS_PER_SOL,
-        read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
+        authority_lamport_escrow_rent + 10 * LAMPORTS_PER_SOL,
+        read_account_lamports(&mut program_context, &authority_lamport_escrow_pda).await?
     );
     assert_eq!(
         0,
@@ -98,15 +98,15 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_slot,
+        authority_lamport_escrow_slot,
         2 * LAMPORTS_PER_SOL,
     )
     .await?;
 
     // After the escrow has had some funds claimed
     assert_eq!(
-        lamport_escrow_rent + 8 * LAMPORTS_PER_SOL,
-        read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
+        authority_lamport_escrow_rent + 8 * LAMPORTS_PER_SOL,
+        read_account_lamports(&mut program_context, &authority_lamport_escrow_pda).await?
     );
     assert_eq!(
         2 * LAMPORTS_PER_SOL,
@@ -120,15 +120,15 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_slot,
+        authority_lamport_escrow_slot,
         8 * LAMPORTS_PER_SOL,
     )
     .await?;
 
     // After the escrow has had all funds claimed
     assert_eq!(
-        lamport_escrow_rent,
-        read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
+        authority_lamport_escrow_rent,
+        read_account_lamports(&mut program_context, &authority_lamport_escrow_pda).await?
     );
     assert_eq!(
         10 * LAMPORTS_PER_SOL,
@@ -142,15 +142,15 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_slot,
+        authority_lamport_escrow_slot,
         0,
     )
     .await?;
 
     // After the escrow has had all funds claimed
     assert_eq!(
-        lamport_escrow_rent,
-        read_account_lamports(&mut program_context, &lamport_escrow_pda).await?
+        authority_lamport_escrow_rent,
+        read_account_lamports(&mut program_context, &authority_lamport_escrow_pda).await?
     );
     assert_eq!(
         10 * LAMPORTS_PER_SOL,
@@ -164,7 +164,7 @@ async fn localnet_lamport_escrow_create_fund_claim() -> Result<(), ProgramError>
         &authority,
         &destination.pubkey(),
         &validator,
-        lamport_escrow_slot,
+        authority_lamport_escrow_slot,
         1,
     )
     .await

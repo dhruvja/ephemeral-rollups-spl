@@ -26,7 +26,7 @@ pub async fn process_token_mint_init(
         &mint.pubkey(),
         rent_minimum_lamports,
         rent_space as u64,
-        &spl_token::ID(),
+        &spl_token::ID,
     );
     process_instruction_with_signer(program_context, instruction_create, payer, mint).await?;
     let instruction_init = initialize_mint(

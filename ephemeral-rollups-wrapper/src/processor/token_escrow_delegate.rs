@@ -54,11 +54,6 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Verify that the owner_program_id account passed as parameter is valid
-    if owner_program_id.key.ne(program_id) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
     // Delegate the escrow, relinquish control on chain (it will become usable in the Ephem)
     delegate_account(
         payer,

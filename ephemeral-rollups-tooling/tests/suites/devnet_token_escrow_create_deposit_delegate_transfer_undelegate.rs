@@ -48,10 +48,6 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
     ])
     .map_err(|e| ProgramError::Signature(e.to_string()))?;
 
-    // Ephemeral dummy payer
-    let payer_ephem = Keypair::new();
-    // TODO - we have to provide fee lamports later for payer in ER
-
     // Important keys used in the test
     let validator = Pubkey::new_unique();
 
@@ -170,6 +166,10 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         authority2_token_escrow_slot,
     )
     .await?;
+
+    // Ephemeral dummy payer
+    let payer_ephem = Keypair::new();
+    // TODO - we have to provide fee lamports later for payer in ER
 
     // Do a transfer between the two escrow inside of the ER
     process_token_escrow_transfer(
