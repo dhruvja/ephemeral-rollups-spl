@@ -1,3 +1,4 @@
+use anchor_lang::AccountDeserialize;
 use borsh::BorshDeserialize;
 use solana_sdk::account::Account;
 use solana_sdk::program_pack::IsInitialized;
@@ -69,4 +70,13 @@ pub async fn read_account_borsh<T: BorshDeserialize>(
     let raw_account_data = read_account_data(program_context, address).await?;
     let raw_account_slice: &[u8] = &raw_account_data;
     T::try_from_slice(raw_account_slice).map_err(ProgramError::Io)
+}
+
+pub async fn read_account_anchor<T: AccountDeserialize>(
+    program_context: &mut Box<dyn ProgramContext>,
+    address: &Pubkey,
+) -> Result<T, ProgramError> {
+    let raw_account_data = read_account_data(program_context, address).await?;
+    let mut raw_account_slice: &[u8] = &raw_account_data;
+    T::try_deserialize(&mut raw_account_slice).map_err(ProgramError::Anchor)
 }

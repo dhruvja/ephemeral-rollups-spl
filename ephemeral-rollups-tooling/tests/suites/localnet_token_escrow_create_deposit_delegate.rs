@@ -1,4 +1,4 @@
-use ephemeral_rollups_wrap::state::token_escrow::TokenEscrow;
+use ephemeral_rollups_wrapper::state::token_escrow::TokenEscrow;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
@@ -10,10 +10,10 @@ use crate::api::program_context::read_account::read_account_borsh;
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
-use crate::api::program_wrap::process_token_escrow_create::process_token_escrow_create;
-use crate::api::program_wrap::process_token_escrow_delegate::process_token_escrow_delegate;
-use crate::api::program_wrap::process_token_escrow_deposit::process_token_escrow_deposit;
-use crate::api::program_wrap::process_token_vault_init::process_token_vault_init;
+use crate::api::program_wrapper::process_token_escrow_create::process_token_escrow_create;
+use crate::api::program_wrapper::process_token_escrow_delegate::process_token_escrow_delegate;
+use crate::api::program_wrapper::process_token_escrow_deposit::process_token_escrow_deposit;
+use crate::api::program_wrapper::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
 async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramError> {
@@ -68,7 +68,7 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
         &validator,
         &token_mint.pubkey(),
         authority_token_escrow_slot,
-        &ephemeral_rollups_wrap::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
 
     // Prepare being able to escrow token for this validator

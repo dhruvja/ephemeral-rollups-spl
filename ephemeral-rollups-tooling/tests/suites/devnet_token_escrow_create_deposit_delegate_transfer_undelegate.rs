@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
-use ephemeral_rollups_wrap::state::token_escrow::TokenEscrow;
+use ephemeral_rollups_wrapper::state::token_escrow::TokenEscrow;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
@@ -17,13 +17,13 @@ use crate::api::program_context::read_account::{
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
-use crate::api::program_wrap::process_token_escrow_create::process_token_escrow_create;
-use crate::api::program_wrap::process_token_escrow_delegate::process_token_escrow_delegate;
-use crate::api::program_wrap::process_token_escrow_deposit::process_token_escrow_deposit;
-use crate::api::program_wrap::process_token_escrow_transfer::process_token_escrow_transfer;
-use crate::api::program_wrap::process_token_escrow_undelegate::process_token_escrow_undelegate;
-use crate::api::program_wrap::process_token_escrow_withdraw::process_token_escrow_withdraw;
-use crate::api::program_wrap::process_token_vault_init::process_token_vault_init;
+use crate::api::program_wrapper::process_token_escrow_create::process_token_escrow_create;
+use crate::api::program_wrapper::process_token_escrow_delegate::process_token_escrow_delegate;
+use crate::api::program_wrapper::process_token_escrow_deposit::process_token_escrow_deposit;
+use crate::api::program_wrapper::process_token_escrow_transfer::process_token_escrow_transfer;
+use crate::api::program_wrapper::process_token_escrow_undelegate::process_token_escrow_undelegate;
+use crate::api::program_wrapper::process_token_escrow_withdraw::process_token_escrow_withdraw;
+use crate::api::program_wrapper::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
 async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
@@ -47,10 +47,6 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         247, 70, 96,
     ])
     .map_err(|e| ProgramError::Signature(e.to_string()))?;
-
-    // Ephemeral dummy payer
-    let payer_ephem = Keypair::new();
-    // TODO - we have to provide fee lamports later for payer in ER
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -97,7 +93,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &validator,
         &token_mint.pubkey(),
         authority1_token_escrow_slot,
-        &ephemeral_rollups_wrap::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
     let authority2_token_escrow_slot = 11;
     let authority2_token_escrow_pda = TokenEscrow::generate_pda(
@@ -105,7 +101,7 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         &validator,
         &token_mint.pubkey(),
         authority2_token_escrow_slot,
-        &ephemeral_rollups_wrap::id(),
+        &ephemeral_rollups_wrapper::ID,
     );
 
     // Prepare being able to escrow this token mint for this validator
@@ -170,6 +166,10 @@ async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
         authority2_token_escrow_slot,
     )
     .await?;
+
+    // Ephemeral dummy payer
+    let payer_ephem = Keypair::new();
+    // TODO - we have to provide fee lamports later for payer in ER
 
     // Do a transfer between the two escrow inside of the ER
     process_token_escrow_transfer(

@@ -9,7 +9,7 @@ default = []
 
 [dev-dependencies]
 ephemeral-rollups-sdk = "0.0.7"
-ephemeral-rollups-wrap = { path = "../ephemeral-rollups-wrap" }
+ephemeral-rollups-wrapper = { path = "../ephemeral-rollups-wrapper" }
 
 async-trait = "0.1.73"
 
@@ -17,8 +17,15 @@ solana-sdk = "1.18.21"
 solana-client = "1.18.21"
 solana-program-test = "1.18.21"
 
-spl-token = "4.0"
-spl-associated-token-account = "2.1"
+spl-token = { version = "4.0", features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "2.1", features = ["no-entrypoint"] }
+spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
+spl-account-compression = { version = "0.4.2", features = ["no-entrypoint"] }
+
+mpl-bubblegum = { version = "1.4.0" }
+spl-merkle-tree-reference = "0.1.0"
 
 borsh = "1.5.1"
 tokio = { version = "1.0.0", features = ["macros"] }
+
+anchor-lang = { version = "0.29.0" }

@@ -1,0 +1,22 @@
+[package]
+name = "ephemeral-rollups-wrapper"
+version = "0.0.1"
+description = "Ephemeral Rollups Wrapper"
+edition = "2021"
+
+[lib]
+name = "ephemeral_rollups_wrapper"
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+default = []
+
+[dependencies]
+solana-program = "1.18.26"
+borsh = "1.5.1"
+ephemeral-rollups-sdk = "0.0.7"
+spl-token = { version = "4.0.0", features = ["no-entrypoint"] }
+spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
+spl-account-compression = { version = "0.4.2", features = ["no-entrypoint"] }
+mpl-bubblegum = { version = "1.4.0" }

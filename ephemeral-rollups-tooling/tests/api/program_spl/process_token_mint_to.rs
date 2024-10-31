@@ -16,7 +16,7 @@ pub async fn process_token_mint_to(
     amount: u64,
 ) -> Result<(), ProgramError> {
     let instruction = mint_to(
-        &spl_token::id(),
+        &spl_token::ID,
         mint,
         token_account,
         &authority.pubkey(),
