@@ -51,7 +51,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         .serialize(&mut &mut bubblegum_escrow_pda.try_borrow_mut_data()?.as_mut())?;
 
     // Log outcome
-    msg!("Ephemeral Rollups Wrapper: Transfered a BubblegumEscrow");
+    msg!("Ephemeral Rollups Wrapper: Transfered a BubblegumEscrow's authority");
     msg!(" - source_authority: {}", source_authority.key);
     msg!(" - destination_authority: {}", args.destination_authority);
     msg!(" - validator: {}", args.validator);

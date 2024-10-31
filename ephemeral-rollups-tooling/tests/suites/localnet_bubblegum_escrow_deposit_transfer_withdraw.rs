@@ -12,7 +12,7 @@ use crate::api::program_bubblegum::process_mint::process_mint;
 use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::read_account_borsh;
+use crate::api::program_context::read_account::{read_account_borsh, read_account_exists};
 use crate::api::program_wrapper::process_bubblegum_escrow_deposit::process_bubblegum_escrow_deposit;
 use crate::api::program_wrapper::process_bubblegum_escrow_transfer::process_bubblegum_escrow_transfer;
 use crate::api::program_wrapper::process_bubblegum_escrow_withdraw::process_bubblegum_escrow_withdraw;
@@ -189,18 +189,10 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
     )
     .await?;
 
-    // After escrow, we update the local proof for later use
-    bubblegum_proof.add_leaf(
-        LeafSchema::V1 {
-            id: bubblegum_nft_asset_id,
-            owner: destination.pubkey(),
-            delegate: destination.pubkey(),
-            nonce: bubblegum_nft_nonce,
-            data_hash: bubblegum_nft_data_hash,
-            creator_hash: bubblegum_nft_creator_hash,
-        }
-        .hash(),
-        bubblegum_nft_nonce as usize,
+    // The escrow must have been destroyed
+    assert_eq!(
+        false,
+        read_account_exists(&mut program_context, &bubblegum_escrow_pda).await?
     );
 
     // Done
