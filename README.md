@@ -45,6 +45,24 @@ A typical example scenario could look like this:
 7) `token_escrow_undelegate` is called for `wallet2_token_escrow`, bringing it back to chain
 8) `token_escrow_withdraw` is then called by `wallet2` to withdraw regular SPL tokens from `wallet2_token_escrow` on-chain
 
+### Moving Bubblegum compressed NFT in and out of the ER
+
+It's possible to escrow cNFT to the ER so that they can be traded/transfered as part of ER transactions. The following IXs are provided:
+
+- `bubblegum_escrow_deposit` -> Create a new `BubblegumEscrow` account representing the wrapped cNFT, initially owned by the depositor's chosen authority wallet
+- `bubblegum_escrow_transfer` -> Transfer ownership of the wrapped cNFT to a new authority wallet (can be used both on-chain and in the ER)
+- `bubblegum_escrow_withdraw` -> Destroy the `BubblegumEscrow` and return the cNFT back to the specified owner (can only be used on-chain)
+- `bubblegum_escrow_delegate` -> Delegate the `BubblegumEscrow` into the ER (becomes unusable on-chain)
+- `bubblegum_escrow_undelegate` -> Undelegate the `BubblegumEscrow` back out from the ER (becomes usable again on-chain)
+
+A typical example scenario could look like this:
+
+1) `bubblegum_escrow_deposit` is called on chain with `wallet1`, creating a `bubblegum_escrow`
+2) `bubblegum_escrow_delegate` is called on chain, moving control of the `bubblegum_escrow` to inside the ER
+3) `bubblegum_escrow_transfer` is used many time inside the ER to trade the wrapped cNFT
+4) `bubblegum_escrow_undelegate` is used in the ER after a while, moving back control of the `bubblegum_escrow` back to chain
+5) `bubblegum_escrow_withdraw` is called by the latest owner of the cNFT on-chain to destroy the escrow and gain access to the raw cNFT for usage with the bubblegum metaplex's programs
+
 ## Ephemeral Rollups Tooling
 
 This crate provide example tests and scenario that can be used to help understand how each instructions can be used.
