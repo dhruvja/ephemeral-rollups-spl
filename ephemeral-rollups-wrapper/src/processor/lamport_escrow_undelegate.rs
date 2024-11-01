@@ -1,6 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use ephemeral_rollups_sdk::consts::MAGIC_PROGRAM_ID;
 use ephemeral_rollups_sdk::ephem::commit_and_undelegate_accounts;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
@@ -55,6 +56,12 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         magic_context_pda,
         magic_program_id,
     )?;
+
+    // Log outcome
+    msg!("Ephemeral Rollups Wrapper: Requested undelegation of a LamportEscrow");
+    msg!(" - authority: {} (slot: {})", authority.key, args.slot);
+    msg!(" - validator: {}", args.validator);
+    msg!(" - lamports: {}", lamport_escrow_pda.lamports());
 
     // Done
     Ok(())

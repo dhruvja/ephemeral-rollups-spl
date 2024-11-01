@@ -10,7 +10,7 @@ use crate::{processor::bubblegum_escrow_withdraw, state::bubblegum_escrow::Bubbl
 
 pub fn instruction(
     authority: &Pubkey,
-    receiver: &Pubkey,
+    new_leaf_owner: &Pubkey,
     validator: &Pubkey,
     spill: &Pubkey,
     tree: &Pubkey,
@@ -29,7 +29,7 @@ pub fn instruction(
 
     let accounts = vec![
         AccountMeta::new(*authority, true),
-        AccountMeta::new(*receiver, false),
+        AccountMeta::new(*new_leaf_owner, false),
         AccountMeta::new(bubblegum_escrow_pda, false),
         AccountMeta::new(*spill, false),
         AccountMeta::new(*tree, false),

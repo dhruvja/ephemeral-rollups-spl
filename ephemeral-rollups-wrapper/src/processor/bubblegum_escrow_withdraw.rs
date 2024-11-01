@@ -27,7 +27,7 @@ pub struct Args {
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
     // Read instruction inputs
-    let [authority, receiver, bubblegum_escrow_pda, spill, tree, tree_config_pda, bubblegum_program_id, compression_program_id, noop_program_id, system_program_id] =
+    let [authority, new_leaf_owner, bubblegum_escrow_pda, spill, tree, tree_config_pda, bubblegum_program_id, compression_program_id, noop_program_id, system_program_id] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -72,7 +72,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
             leaf_delegate: (bubblegum_escrow_pda, false),
             tree_config: tree_config_pda,
             merkle_tree: tree,
-            new_leaf_owner: receiver,
+            new_leaf_owner: new_leaf_owner,
             log_wrapper: noop_program_id,
             compression_program: compression_program_id,
             system_program: system_program_id,
@@ -98,7 +98,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     msg!(" - authority: {}", authority.key);
     msg!(" - validator: {}", args.validator);
     msg!(" - asset: {}", asset);
-    msg!(" - receiver: {}", receiver.key);
+    msg!(" - new_leaf_owner: {}", new_leaf_owner.key);
 
     // Done
     Ok(())

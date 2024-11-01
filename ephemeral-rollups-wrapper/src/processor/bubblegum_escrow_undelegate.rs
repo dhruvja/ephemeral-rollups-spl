@@ -1,4 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use ephemeral_rollups_sdk::consts::MAGIC_PROGRAM_ID;
+use ephemeral_rollups_sdk::ephem::commit_and_undelegate_accounts;
 use mpl_bubblegum::utils::get_asset_id;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
@@ -6,29 +8,36 @@ use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubke
 
 use crate::bubblegum_escrow_seeds_generator;
 use crate::state::bubblegum_escrow::BubblegumEscrow;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::ensure::{
+    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
+};
 
-pub const DISCRIMINANT: [u8; 8] = [0x85, 0xd7, 0x3a, 0x53, 0x9f, 0xda, 0xfa, 0x5c];
+pub const DISCRIMINANT: [u8; 8] = [0xaa, 0x98, 0xa4, 0x02, 0xa7, 0xee, 0x30, 0x93];
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
-    pub destination_authority: Pubkey,
     pub validator: Pubkey,
     pub tree: Pubkey,
     pub nonce: u64,
 }
 
 pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    // Read instruction inputs
-    let [source_authority, bubblegum_escrow_pda] = accounts else {
+    let [payer, authority, bubblegum_escrow_pda, magic_context_pda, magic_program_id] = accounts
+    else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
 
-    // Verify that the authority user is indeed the one initiating this IX
-    ensure_is_signer(source_authority)?;
+    // Verify the programs
+    ensure_is_program_id(magic_program_id, &MAGIC_PROGRAM_ID)?;
 
-    // Verify that the program has proper control of the escrow PDA (and that it's been initialized)
+    // Verify that the payer is allowed to pay for the rent fees
+    ensure_is_signer(payer)?;
+
+    // Verify that the authority user is indeed the one initiating this IX
+    ensure_is_signer(authority)?;
+
+    // Verify that the program has proper control of the PDA (and that it's been initialized)
     ensure_is_owned_by_program(bubblegum_escrow_pda, program_id)?;
 
     // Which cNFT is being escrowed
@@ -39,24 +48,26 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     ensure_is_pda(bubblegum_escrow_pda, bubblegum_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized
-    let mut bubblegum_escrow_data =
+    let bubblegum_escrow_data =
         BubblegumEscrow::try_from_slice(&bubblegum_escrow_pda.data.borrow())?;
     if bubblegum_escrow_data.discriminant != BubblegumEscrow::discriminant() {
         return Err(ProgramError::InvalidAccountData);
     }
-    if bubblegum_escrow_data.authority != *source_authority.key {
+    if bubblegum_escrow_data.authority != *authority.key {
         return Err(ProgramError::InvalidAccountOwner);
     }
 
-    // Update the escrow authority
-    bubblegum_escrow_data.authority = args.destination_authority;
-    bubblegum_escrow_data
-        .serialize(&mut &mut bubblegum_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+    // Request undelegation inside the ER
+    commit_and_undelegate_accounts(
+        payer,
+        vec![bubblegum_escrow_pda],
+        magic_context_pda,
+        magic_program_id,
+    )?;
 
     // Log outcome
-    msg!("Ephemeral Rollups Wrapper: Transfered a BubblegumEscrow's authority");
-    msg!(" - source_authority: {}", source_authority.key);
-    msg!(" - destination_authority: {}", args.destination_authority);
+    msg!("Ephemeral Rollups Wrapper: Requested undelegation of a BubblegumEscrow");
+    msg!(" - authority: {}", authority.key);
     msg!(" - validator: {}", args.validator);
     msg!(" - asset: {}", asset);
 
