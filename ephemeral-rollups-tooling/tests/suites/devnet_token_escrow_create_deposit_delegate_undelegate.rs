@@ -26,8 +26,7 @@ use crate::api::program_wrapper::process_token_escrow_withdraw::process_token_es
 use crate::api::program_wrapper::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
-async fn devnet_token_escrow_create_deposit_delegate_transfer_undelegate(
-) -> Result<(), ProgramError> {
+async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), ProgramError> {
     let mut program_context_chain: Box<dyn ProgramContext> =
         Box::new(RpcClient::new_with_commitment(
             "https://api.devnet.solana.com".to_string(),

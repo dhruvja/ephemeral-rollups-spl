@@ -1,7 +1,12 @@
+use std::time::{Duration, Instant};
+
+use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_wrapper::state::bubblegum_escrow::BubblegumEscrow;
 use mpl_bubblegum::hash::{hash_creators, hash_metadata};
 use mpl_bubblegum::types::{Creator, LeafSchema, MetadataArgs, TokenProgramVersion, TokenStandard};
 use mpl_bubblegum::utils::get_asset_id;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
@@ -9,23 +14,41 @@ use spl_merkle_tree_reference::{MerkleTree, Node};
 
 use crate::api::program_bubblegum::process_create_tree::process_create_tree;
 use crate::api::program_bubblegum::process_mint::process_mint;
-use crate::api::program_context::create_program_test_context::create_program_test_context;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::{read_account_borsh, read_account_exists};
+use crate::api::program_context::read_account::{
+    read_account_borsh, read_account_exists, read_account_owner,
+};
+use crate::api::program_wrapper::process_bubblegum_escrow_delegate::process_bubblegum_escrow_delegate;
 use crate::api::program_wrapper::process_bubblegum_escrow_deposit::process_bubblegum_escrow_deposit;
 use crate::api::program_wrapper::process_bubblegum_escrow_transfer::process_bubblegum_escrow_transfer;
+use crate::api::program_wrapper::process_bubblegum_escrow_undelegate::process_bubblegum_escrow_undelegate;
 use crate::api::program_wrapper::process_bubblegum_escrow_withdraw::process_bubblegum_escrow_withdraw;
 
 #[tokio::test]
-async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), ProgramError> {
-    let mut program_context: Box<dyn ProgramContext> =
-        Box::new(create_program_test_context().await);
+async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), ProgramError> {
+    let mut program_context_chain: Box<dyn ProgramContext> =
+        Box::new(RpcClient::new_with_commitment(
+            "https://api.devnet.solana.com".to_string(),
+            CommitmentConfig::confirmed(),
+        ));
+    let mut program_context_ephem: Box<dyn ProgramContext> =
+        Box::new(RpcClient::new_with_commitment(
+            "https://devnet.magicblock.app".to_string(),
+            CommitmentConfig::confirmed(),
+        ));
+
+    // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
+    let payer_chain = Keypair::from_bytes(&[
+        243, 85, 166, 238, 237, 2, 46, 208, 68, 40, 98, 2, 148, 117, 134, 238, 144, 223, 165, 108,
+        203, 120, 96, 89, 172, 223, 98, 26, 162, 92, 234, 167, 5, 201, 50, 82, 10, 153, 196, 60,
+        132, 31, 123, 66, 63, 113, 122, 83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225,
+        247, 70, 96,
+    ])
+    .map_err(|e| ProgramError::Signature(e.to_string()))?;
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
-
-    let payer = Keypair::new();
 
     let bubblegum_minter = Keypair::new();
     let bubblegum_tree = Keypair::new();
@@ -36,15 +59,10 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
     let source = Keypair::new();
     let destination = Keypair::new();
 
-    // Fund payer
-    program_context
-        .process_airdrop(&payer.pubkey(), 1_000_000_000_000)
-        .await?;
-
     // Create the bubblegum tree
     process_create_tree(
-        &mut program_context,
-        &payer,
+        &mut program_context_chain,
+        &payer_chain,
         &bubblegum_minter,
         &bubblegum_tree,
         false,
@@ -76,8 +94,8 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
 
     // Mint the new nft to the "source"
     process_mint(
-        &mut program_context,
-        &payer,
+        &mut program_context_chain,
+        &payer_chain,
         &bubblegum_minter,
         &bubblegum_tree.pubkey(),
         &source.pubkey(),
@@ -108,8 +126,8 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
 
     // Create a new bubblegum escrow (owned by authority1)
     process_bubblegum_escrow_deposit(
-        &mut program_context,
-        &payer,
+        &mut program_context_chain,
+        &payer_chain,
         &authority1.pubkey(),
         &validator,
         &bubblegum_tree.pubkey(),
@@ -133,7 +151,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
     // The authority1 must now be the escrow authority
     assert_eq!(
         authority1.pubkey(),
-        read_account_borsh::<BubblegumEscrow>(&mut program_context, &bubblegum_escrow_pda)
+        read_account_borsh::<BubblegumEscrow>(&mut program_context_chain, &bubblegum_escrow_pda)
             .await?
             .authority
     );
@@ -152,10 +170,25 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
         bubblegum_nft_nonce as usize,
     );
 
-    // Transfer the ownership to authority2
+    // Delegate the escrow
+    process_bubblegum_escrow_delegate(
+        &mut program_context_chain,
+        &payer_chain,
+        &authority1,
+        &validator,
+        &bubblegum_tree.pubkey(),
+        bubblegum_nft_nonce,
+    )
+    .await?;
+
+    // Ephemeral dummy payer
+    let payer_ephem = Keypair::new();
+    // TODO - we have to provide fee lamports later for payer in ER
+
+    // Transfer the ownership to authority2 from inside the ER
     process_bubblegum_escrow_transfer(
-        &mut program_context,
-        &payer,
+        &mut program_context_ephem,
+        &payer_ephem,
         &authority1,
         &authority2.pubkey(),
         &validator,
@@ -167,15 +200,41 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
     // The authority2 must now be the escrow authority
     assert_eq!(
         authority2.pubkey(),
-        read_account_borsh::<BubblegumEscrow>(&mut program_context, &bubblegum_escrow_pda)
+        read_account_borsh::<BubblegumEscrow>(&mut program_context_ephem, &bubblegum_escrow_pda)
             .await?
             .authority
     );
 
+    // Undelegate back to chain
+    process_bubblegum_escrow_undelegate(
+        &mut program_context_ephem,
+        &payer_ephem,
+        &authority2,
+        &validator,
+        &bubblegum_tree.pubkey(),
+        bubblegum_nft_nonce,
+    )
+    .await?;
+
+    // Wait for undelegation to succeed (we could alternatively subscribe to the accounts/programs/logs involved)
+    let start = Instant::now();
+    loop {
+        let bubblegum_escrow_owner =
+            read_account_owner(&mut program_context_chain, &bubblegum_escrow_pda)
+                .await?
+                .unwrap_or_default();
+        if bubblegum_escrow_owner != DELEGATION_PROGRAM_ID {
+            break;
+        }
+        if start.elapsed() > Duration::from_secs(10) {
+            return Err(ProgramError::Custom("Undelegation timeout"));
+        }
+    }
+
     // Withdraw the cNFT from the escrow back to "destination"
     process_bubblegum_escrow_withdraw(
-        &mut program_context,
-        &payer,
+        &mut program_context_chain,
+        &payer_chain,
         &authority2,
         &destination.pubkey(),
         &validator,
@@ -192,7 +251,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), Pro
     // The escrow must have been destroyed
     assert_eq!(
         false,
-        read_account_exists(&mut program_context, &bubblegum_escrow_pda).await?
+        read_account_exists(&mut program_context_chain, &bubblegum_escrow_pda).await?
     );
 
     // Done

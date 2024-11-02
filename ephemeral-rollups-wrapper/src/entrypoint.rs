@@ -6,10 +6,10 @@ use solana_program::{
 
 use crate::processor::{
     apply_undelegation, bubblegum_escrow_delegate, bubblegum_escrow_deposit,
-    bubblegum_escrow_transfer, bubblegum_escrow_withdraw, lamport_escrow_claim,
-    lamport_escrow_create, lamport_escrow_delegate, lamport_escrow_undelegate, token_escrow_create,
-    token_escrow_delegate, token_escrow_deposit, token_escrow_transfer, token_escrow_undelegate,
-    token_escrow_withdraw, token_vault_init,
+    bubblegum_escrow_transfer, bubblegum_escrow_undelegate, bubblegum_escrow_withdraw,
+    lamport_escrow_claim, lamport_escrow_create, lamport_escrow_delegate,
+    lamport_escrow_undelegate, token_escrow_create, token_escrow_delegate, token_escrow_deposit,
+    token_escrow_transfer, token_escrow_undelegate, token_escrow_withdraw, token_vault_init,
 };
 
 fn process_instruction(
@@ -39,6 +39,9 @@ fn process_instruction(
         }
         bubblegum_escrow_transfer::DISCRIMINANT => {
             bubblegum_escrow_transfer::process(program_id, accounts, data)
+        }
+        bubblegum_escrow_undelegate::DISCRIMINANT => {
+            bubblegum_escrow_undelegate::process(program_id, accounts, data)
         }
         bubblegum_escrow_withdraw::DISCRIMINANT => {
             bubblegum_escrow_withdraw::process(program_id, accounts, data)

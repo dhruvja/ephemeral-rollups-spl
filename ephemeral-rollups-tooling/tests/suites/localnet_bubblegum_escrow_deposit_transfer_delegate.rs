@@ -73,7 +73,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), Pro
         uses: None,
     };
 
-    // Mint the new nft
+    // Mint the new nft to the "source"
     process_mint(
         &mut program_context,
         &payer,

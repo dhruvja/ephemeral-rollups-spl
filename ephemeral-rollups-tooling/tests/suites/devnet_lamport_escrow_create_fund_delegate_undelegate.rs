@@ -18,7 +18,7 @@ use crate::api::program_wrapper::process_lamport_escrow_delegate::process_lampor
 use crate::api::program_wrapper::process_lamport_escrow_undelegate::process_lamport_escrow_undelegate;
 
 #[tokio::test]
-async fn devnet_lamport_escrow_create_fund_delegate_claim_undelegate() -> Result<(), ProgramError> {
+async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), ProgramError> {
     let mut program_context_chain: Box<dyn ProgramContext> =
         Box::new(RpcClient::new_with_commitment(
             "https://api.devnet.solana.com".to_string(),
