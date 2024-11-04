@@ -1,6 +1,3 @@
-use std::time::{Duration, Instant};
-
-use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_wrapper::state::lamport_escrow::LamportEscrow;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -10,7 +7,8 @@ use solana_sdk::signer::Signer;
 
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::{read_account_lamports, read_account_owner};
+use crate::api::program_context::read_account::read_account_lamports;
+use crate::api::program_delegation::wait_until_undelegation::wait_until_undelegation;
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
 use crate::api::program_wrapper::process_lamport_escrow_claim::process_lamport_escrow_claim;
 use crate::api::program_wrapper::process_lamport_escrow_create::process_lamport_escrow_create;
@@ -184,26 +182,9 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), P
     )
     .await?;
 
-    // Wait for undelegation to succeed (we could alternatively subscribe to the accounts/programs/logs involved)
-    let start = Instant::now();
-    loop {
-        let authority1_lamport_escrow_owner =
-            read_account_owner(&mut program_context_chain, &authority1_lamport_escrow_pda)
-                .await?
-                .unwrap_or_default();
-        let authority2_lamport_escrow_owner =
-            read_account_owner(&mut program_context_chain, &authority2_lamport_escrow_pda)
-                .await?
-                .unwrap_or_default();
-        if authority1_lamport_escrow_owner != DELEGATION_PROGRAM_ID
-            && authority2_lamport_escrow_owner != DELEGATION_PROGRAM_ID
-        {
-            break;
-        }
-        if start.elapsed() > Duration::from_secs(10) {
-            return Err(ProgramError::Custom("Undelegation timeout"));
-        }
-    }
+    // Wait for undelegation to succeed
+    wait_until_undelegation(&mut program_context_chain, &authority1_lamport_escrow_pda).await?;
+    wait_until_undelegation(&mut program_context_chain, &authority2_lamport_escrow_pda).await?;
 
     // For fun, we should be able to claim lamports back on chain now
     process_lamport_escrow_claim(

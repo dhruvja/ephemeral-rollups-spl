@@ -1,6 +1,3 @@
-use std::time::{Duration, Instant};
-
-use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_wrapper::state::bubblegum_escrow::BubblegumEscrow;
 use mpl_bubblegum::hash::{hash_creators, hash_metadata};
 use mpl_bubblegum::types::{Creator, LeafSchema, MetadataArgs, TokenProgramVersion, TokenStandard};
@@ -16,9 +13,8 @@ use crate::api::program_bubblegum::process_create_tree::process_create_tree;
 use crate::api::program_bubblegum::process_mint::process_mint;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::{
-    read_account_borsh, read_account_exists, read_account_owner,
-};
+use crate::api::program_context::read_account::{read_account_borsh, read_account_exists};
+use crate::api::program_delegation::wait_until_undelegation::wait_until_undelegation;
 use crate::api::program_wrapper::process_bubblegum_escrow_delegate::process_bubblegum_escrow_delegate;
 use crate::api::program_wrapper::process_bubblegum_escrow_deposit::process_bubblegum_escrow_deposit;
 use crate::api::program_wrapper::process_bubblegum_escrow_transfer::process_bubblegum_escrow_transfer;
@@ -216,20 +212,8 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), Pro
     )
     .await?;
 
-    // Wait for undelegation to succeed (we could alternatively subscribe to the accounts/programs/logs involved)
-    let start = Instant::now();
-    loop {
-        let bubblegum_escrow_owner =
-            read_account_owner(&mut program_context_chain, &bubblegum_escrow_pda)
-                .await?
-                .unwrap_or_default();
-        if bubblegum_escrow_owner != DELEGATION_PROGRAM_ID {
-            break;
-        }
-        if start.elapsed() > Duration::from_secs(10) {
-            return Err(ProgramError::Custom("Undelegation timeout"));
-        }
-    }
+    // Wait for undelegation to succeed
+    wait_until_undelegation(&mut program_context_chain, &bubblegum_escrow_pda).await?;
 
     // Withdraw the cNFT from the escrow back to "destination"
     process_bubblegum_escrow_withdraw(

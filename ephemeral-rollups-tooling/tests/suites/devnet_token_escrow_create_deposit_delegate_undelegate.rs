@@ -1,6 +1,3 @@
-use std::time::{Duration, Instant};
-
-use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_wrapper::state::token_escrow::TokenEscrow;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -11,9 +8,8 @@ use spl_token::state::Account;
 
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::{
-    read_account_borsh, read_account_owner, read_account_packed,
-};
+use crate::api::program_context::read_account::{read_account_borsh, read_account_packed};
+use crate::api::program_delegation::wait_until_undelegation::wait_until_undelegation;
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
@@ -218,26 +214,9 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     )
     .await?;
 
-    // Wait for undelegations to succeed (we could alternatively subscribe to the accounts/programs/logs involved)
-    let start = Instant::now();
-    loop {
-        let authority1_token_escrow_owner =
-            read_account_owner(&mut program_context_chain, &authority1_token_escrow_pda)
-                .await?
-                .unwrap_or_default();
-        let authority2_token_escrow_owner =
-            read_account_owner(&mut program_context_chain, &authority2_token_escrow_pda)
-                .await?
-                .unwrap_or_default();
-        if authority1_token_escrow_owner != DELEGATION_PROGRAM_ID
-            && authority2_token_escrow_owner != DELEGATION_PROGRAM_ID
-        {
-            break;
-        }
-        if start.elapsed() > Duration::from_secs(10) {
-            return Err(ProgramError::Custom("Undelegation timeout"));
-        }
-    }
+    // Wait for undelegations to succeed
+    wait_until_undelegation(&mut program_context_chain, &authority1_token_escrow_pda).await?;
+    wait_until_undelegation(&mut program_context_chain, &authority2_token_escrow_pda).await?;
 
     // Transfer success should be reflected in the balances on the chain
     assert_eq!(
