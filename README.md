@@ -69,4 +69,5 @@ This crate provide example tests and scenario that can be used to help understan
 
 Checkout fully functional wrapping scenarios working on devnet:
 
-- [devnet_token_escrow_create_deposit_delegate_transfer_undelegate](https://github.com/magicblock-labs/ephemeral-rollups-spl/blob/main/ephemeral-rollups-tooling/tests/suites/devnet_token_escrow_create_deposit_delegate_transfer_undelegate.rs)
+- SPL Token Trading in the ER [devnet_token_escrow_create_deposit_delegate_undelegate](https://github.com/magicblock-labs/ephemeral-rollups-spl/blob/main/ephemeral-rollups-tooling/tests/suites/devnet_token_escrow_create_deposit_delegate_undelegate.rs)
+- Bubblegum cNFT Trading in the ER [devnet_bubblegum_escrow_deposit_delegate_undelegate](https://github.com/magicblock-labs/ephemeral-rollups-spl/blob/main/ephemeral-rollups-tooling/tests/suites/devnet_bubblegum_escrow_deposit_delegate_undelegate.rs)
