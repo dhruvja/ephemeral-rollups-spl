@@ -14,6 +14,7 @@ use crate::api::program_bubblegum::process_mint::process_mint;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 use crate::api::program_context::read_account::{read_account_borsh, read_account_exists};
+use crate::api::program_delegation::process_delegate_on_curve::process_delegate_on_curve;
 use crate::api::program_delegation::wait_until_undelegation::wait_until_undelegation;
 use crate::api::program_wrapper::process_bubblegum_escrow_delegate::process_bubblegum_escrow_delegate;
 use crate::api::program_wrapper::process_bubblegum_escrow_deposit::process_bubblegum_escrow_deposit;
@@ -177,9 +178,15 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), Pro
     )
     .await?;
 
-    // Ephemeral dummy payer
+    // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem = Keypair::new();
-    // TODO - we have to provide fee lamports later for payer in ER
+    process_delegate_on_curve(
+        &mut program_context_chain,
+        &payer_chain,
+        &payer_ephem,
+        1_000_000,
+    )
+    .await?;
 
     // Transfer the ownership to authority2 from inside the ER
     process_bubblegum_escrow_transfer(

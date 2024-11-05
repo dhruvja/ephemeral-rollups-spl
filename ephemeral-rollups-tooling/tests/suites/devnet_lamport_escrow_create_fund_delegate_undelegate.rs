@@ -8,6 +8,7 @@ use solana_sdk::signer::Signer;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 use crate::api::program_context::read_account::read_account_lamports;
+use crate::api::program_delegation::process_delegate_on_curve::process_delegate_on_curve;
 use crate::api::program_delegation::wait_until_undelegation::wait_until_undelegation;
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
 use crate::api::program_wrapper::process_lamport_escrow_claim::process_lamport_escrow_claim;
@@ -115,9 +116,15 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), P
     )
     .await?;
 
-    // Ephemeral dummy payer
+    // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem = Keypair::new();
-    // TODO - we have to provide fee lamports later for payer in ER
+    process_delegate_on_curve(
+        &mut program_context_chain,
+        &payer_chain,
+        &payer_ephem,
+        1_000_000,
+    )
+    .await?;
 
     // TODO - this should work properly, but doesn't, yet
     // Claim some funds from the escrow toward the other one (from inside the ER)

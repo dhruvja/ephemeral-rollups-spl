@@ -9,6 +9,7 @@ use spl_token::state::Account;
 use crate::api::program_context::program_context_trait::ProgramContext;
 use crate::api::program_context::program_error::ProgramError;
 use crate::api::program_context::read_account::{read_account_borsh, read_account_packed};
+use crate::api::program_delegation::process_delegate_on_curve::process_delegate_on_curve;
 use crate::api::program_delegation::wait_until_undelegation::wait_until_undelegation;
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
@@ -162,9 +163,15 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     )
     .await?;
 
-    // Ephemeral dummy payer
+    // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem = Keypair::new();
-    // TODO - we have to provide fee lamports later for payer in ER
+    process_delegate_on_curve(
+        &mut program_context_chain,
+        &payer_chain,
+        &payer_ephem,
+        1_000_000,
+    )
+    .await?;
 
     // Do a transfer between the two escrow inside of the ER
     process_token_escrow_transfer(
