@@ -50,8 +50,8 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     let authority1 = Keypair::new();
     let authority2 = Keypair::new();
 
-    let source = Keypair::new();
-    let destination = Keypair::new();
+    let chain_input = Keypair::new();
+    let chain_output = Pubkey::new_unique();
 
     // Create token mint
     let token_mint = Keypair::new();
@@ -64,12 +64,12 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     )
     .await?;
 
-    // Airdrop token to our source wallet
-    let source_token = process_associated_token_account_get_or_init(
+    // Airdrop token to our chain_input wallet
+    let chain_input_token = process_associated_token_account_get_or_init(
         &mut program_context_chain,
         &payer_chain,
         &token_mint.pubkey(),
-        &source.pubkey(),
+        &chain_input.pubkey(),
     )
     .await?;
     process_token_mint_to(
@@ -77,7 +77,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
         &payer_chain,
         &token_mint.pubkey(),
         &token_mint,
-        &source_token,
+        &chain_input_token,
         10_000_000,
     )
     .await?;
@@ -133,8 +133,8 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     process_token_escrow_deposit(
         &mut program_context_chain,
         &payer_chain,
-        &source,
-        &source_token,
+        &chain_input,
+        &chain_input_token,
         &authority1.pubkey(),
         &validator,
         &token_mint.pubkey(),
@@ -240,11 +240,11 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     );
 
     // Just for fun, we should now be able to withdraw funds on-chain
-    let destination_token = process_associated_token_account_get_or_init(
+    let chain_output_token = process_associated_token_account_get_or_init(
         &mut program_context_chain,
         &payer_chain,
         &token_mint.pubkey(),
-        &destination.pubkey(),
+        &chain_output,
     )
     .await?;
 
@@ -252,7 +252,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
         &mut program_context_chain,
         &payer_chain,
         &authority1,
-        &destination_token,
+        &chain_output_token,
         &validator,
         &token_mint.pubkey(),
         authority1_token_escrow_slot,
@@ -263,7 +263,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
         &mut program_context_chain,
         &payer_chain,
         &authority2,
-        &destination_token,
+        &chain_output_token,
         &validator,
         &token_mint.pubkey(),
         authority2_token_escrow_slot,
@@ -271,10 +271,10 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     )
     .await?;
 
-    // Verify that the on-chain destination token account now has our tokens
+    // Verify that the on-chain chain_output token account now has our tokens
     assert_eq!(
         10_000_000,
-        read_account_packed::<Account>(&mut program_context_chain, &destination_token)
+        read_account_packed::<Account>(&mut program_context_chain, &chain_output_token)
             .await?
             .amount
     );

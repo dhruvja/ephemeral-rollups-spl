@@ -53,8 +53,8 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), Pro
     let authority1 = Keypair::new();
     let authority2 = Keypair::new();
 
-    let source = Keypair::new();
-    let destination = Keypair::new();
+    let chain_input = Keypair::new();
+    let chain_output = Pubkey::new_unique();
 
     // Create the bubblegum tree
     process_create_tree(
@@ -89,13 +89,13 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), Pro
         uses: None,
     };
 
-    // Mint the new nft to the "source"
+    // Mint the new nft to the "chain_input"
     process_mint(
         &mut program_context_chain,
         &payer_chain,
         &bubblegum_minter,
         &bubblegum_tree.pubkey(),
-        &source.pubkey(),
+        &chain_input.pubkey(),
         &bubblegum_nft_metadata,
     )
     .await?;
@@ -111,8 +111,8 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), Pro
     bubblegum_proof.add_leaf(
         LeafSchema::V1 {
             id: bubblegum_nft_asset_id,
-            owner: source.pubkey(),
-            delegate: source.pubkey(),
+            owner: chain_input.pubkey(),
+            delegate: chain_input.pubkey(),
             nonce: bubblegum_nft_nonce,
             data_hash: bubblegum_nft_data_hash,
             creator_hash: bubblegum_nft_creator_hash,
@@ -128,8 +128,8 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), Pro
         &authority1.pubkey(),
         &validator,
         &bubblegum_tree.pubkey(),
-        &source,
-        &source.pubkey(),
+        &chain_input,
+        &chain_input.pubkey(),
         &bubblegum_proof.get_root(),
         &bubblegum_nft_data_hash,
         &bubblegum_nft_creator_hash,
@@ -222,14 +222,14 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), Pro
     // Wait for undelegation to succeed
     wait_until_undelegation(&mut program_context_chain, &bubblegum_escrow_pda).await?;
 
-    // Withdraw the cNFT from the escrow back to "destination"
+    // Withdraw the cNFT from the escrow back to "chain_output"
     process_bubblegum_escrow_withdraw(
         &mut program_context_chain,
         &payer_chain,
         &authority2,
-        &destination.pubkey(),
+        &chain_output,
         &validator,
-        &destination.pubkey(),
+        &chain_output,
         &bubblegum_tree.pubkey(),
         &bubblegum_proof.get_root(),
         &bubblegum_nft_data_hash,

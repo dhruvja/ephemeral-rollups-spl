@@ -44,7 +44,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), P
     let authority1 = Keypair::new();
     let authority2 = Keypair::new();
 
-    let destination = Keypair::new();
+    let chain_output = Pubkey::new_unique();
 
     // Lamport escrow account we will be using
     let authority1_lamport_escrow_slot = 41;
@@ -132,7 +132,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), P
         &mut program_context_ephem,
         &payer_ephem,
         &authority1,
-        &authority2_lamport_escrow_pda, // destination other escrow
+        &authority2_lamport_escrow_pda, // other escrow is the receiver
         &validator,
         authority1_lamport_escrow_slot,
         400_000,
@@ -154,7 +154,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), P
         &mut program_context_ephem,
         &payer_ephem,
         &authority2,
-        &authority1_lamport_escrow_pda, // destination other escrow
+        &authority1_lamport_escrow_pda, // other escrow is the receiver
         &validator,
         authority2_lamport_escrow_slot,
         100_000,
@@ -198,7 +198,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), P
         &mut program_context_chain,
         &payer_chain,
         &authority1,
-        &destination.pubkey(),
+        &chain_output,
         &validator,
         authority1_lamport_escrow_slot,
         700_000,
@@ -208,7 +208,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), P
         &mut program_context_chain,
         &payer_chain,
         &authority2,
-        &destination.pubkey(),
+        &chain_output,
         &validator,
         authority2_lamport_escrow_slot,
         300_000,
