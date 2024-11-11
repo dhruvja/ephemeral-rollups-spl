@@ -1,6 +1,6 @@
 pub mod devnet_bubblegum_escrow_deposit_delegate_undelegate;
 pub mod devnet_lamport_escrow_create_fund_delegate_undelegate;
-pub mod devnet_payers_delegation_on_curve;
+pub mod devnet_lamport_payer_delegate_on_curve_transfer;
 pub mod devnet_token_escrow_create_deposit_delegate_undelegate;
 pub mod localnet_bubblegum_escrow_deposit_transfer_delegate;
 pub mod localnet_bubblegum_escrow_deposit_transfer_withdraw;

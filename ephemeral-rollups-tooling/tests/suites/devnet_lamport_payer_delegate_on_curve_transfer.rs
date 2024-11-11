@@ -10,7 +10,7 @@ use crate::api::program_delegation::process_delegate_on_curve::process_delegate_
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
 
 #[tokio::test]
-async fn devnet_lamport_payer_delegate_transfer() -> Result<(), ProgramError> {
+async fn devnet_lamport_payer_delegate_on_curve_transfer() -> Result<(), ProgramError> {
     let mut program_context_chain: Box<dyn ProgramContext> =
         Box::new(RpcClient::new_with_commitment(
             "https://api.devnet.solana.com".to_string(),
