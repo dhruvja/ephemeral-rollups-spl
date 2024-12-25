@@ -1,15 +1,12 @@
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_toolbox_endpoint::{Endpoint, EndpointError};
 
 use ephemeral_rollups_wrapper::instruction::bubblegum_escrow_deposit;
 
-use crate::api::program_context::process_instruction::process_instruction_with_signer;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-
 pub async fn process_bubblegum_escrow_deposit(
-    program_context: &mut Box<dyn ProgramContext>,
+    endpoint: &mut Endpoint,
     payer: &Keypair,
     authority: &Pubkey,
     validator: &Pubkey,
@@ -21,7 +18,7 @@ pub async fn process_bubblegum_escrow_deposit(
     creator_hash: &[u8; 32],
     nonce: u64,
     index: u32,
-) -> Result<(), ProgramError> {
+) -> Result<(), EndpointError> {
     let instruction = bubblegum_escrow_deposit::instruction(
         &payer.pubkey(),
         authority,
@@ -35,5 +32,8 @@ pub async fn process_bubblegum_escrow_deposit(
         nonce,
         index,
     );
-    process_instruction_with_signer(program_context, instruction, payer, leaf_owner).await
+    endpoint
+        .process_instruction_with_signers(instruction, payer, &[leaf_owner])
+        .await?;
+    Ok(())
 }

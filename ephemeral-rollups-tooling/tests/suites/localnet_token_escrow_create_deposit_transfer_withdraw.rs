@@ -4,10 +4,9 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use spl_token::state::Account;
 
-use crate::api::program_context::create_program_test_context::create_program_test_context;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::{read_account_borsh, read_account_packed};
+use crate::api::endpoint::create_endpoint_program_test::create_program_test_context;
+
+use crate::api::endpoint::read_account::{read_account_borsh, read_account_packed};
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
@@ -18,9 +17,8 @@ use crate::api::program_wrapper::process_token_escrow_withdraw::process_token_es
 use crate::api::program_wrapper::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
-async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), ProgramError> {
-    let mut program_context: Box<dyn ProgramContext> =
-        Box::new(create_program_test_context().await);
+async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), EndpointError> {
+    let mut endpoint = Endpoint::from(create_program_test_context().await);
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();

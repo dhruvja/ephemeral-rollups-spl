@@ -4,16 +4,16 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 
-use crate::api::program_context::create_program_test_context::create_program_test_context;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::read_account_lamports;
+use crate::api::endpoint::create_endpoint_program_test::create_program_test_context;
+
+
+use crate::api::endpoint::read_account::read_account_lamports;
 use crate::api::program_spl::process_system_transfer::process_system_transfer;
 use crate::api::program_wrapper::process_lamport_escrow_create::process_lamport_escrow_create;
 use crate::api::program_wrapper::process_lamport_escrow_delegate::process_lamport_escrow_delegate;
 
 #[tokio::test]
-async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), ProgramError> {
+async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), EndpointError> {
     let mut program_context: Box<dyn ProgramContext> =
         Box::new(create_program_test_context().await);
 

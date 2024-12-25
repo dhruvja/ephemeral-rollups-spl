@@ -2,11 +2,12 @@ use ephemeral_rollups_wrapper::state::token_escrow::TokenEscrow;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_toolbox_endpoint::Endpoint;
 
-use crate::api::program_context::create_program_test_context::create_program_test_context;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::read_account_borsh;
+use crate::api::endpoint::create_endpoint_program_test::create_program_test_context;
+
+
+use crate::api::endpoint::read_account::read_account_borsh;
 use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
 use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
 use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
@@ -16,9 +17,12 @@ use crate::api::program_wrapper::process_token_escrow_deposit::process_token_esc
 use crate::api::program_wrapper::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
-async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramError> {
+async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), EndpointError> {
     let mut program_context: Box<dyn ProgramContext> =
         Box::new(create_program_test_context().await);
+
+    let mut endpoint = Endpoint::new_program_test(&[]).await;
+    let _ = endpoint.get_clock().await;
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();

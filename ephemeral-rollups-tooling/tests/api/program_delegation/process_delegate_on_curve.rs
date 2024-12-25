@@ -10,28 +10,24 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::system_program;
-
-use crate::api::program_context::process_instruction::process_instruction_with_signer;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_spl::process_system_create::process_system_create;
+use solana_toolbox_endpoint::{Endpoint, EndpointError};
 
 pub async fn process_delegate_on_curve(
-    program_context: &mut Box<dyn ProgramContext>,
+    endpoint: &mut Endpoint,
     payer: &Keypair,
     account: &Keypair,
     lamports: u64,
-) -> Result<(), ProgramError> {
-    let rent_minimum_balance = program_context.get_rent_minimum_balance(0).await?;
-    process_system_create(
-        program_context,
-        payer,
-        account,
-        rent_minimum_balance + lamports,
-        0,
-        &DELEGATION_PROGRAM_ID,
-    )
-    .await?;
+) -> Result<(), EndpointError> {
+    let rent_minimum_balance = endpoint.get_rent_minimum_balance(0).await?;
+    endpoint
+        .process_system_create(
+            payer,
+            account,
+            rent_minimum_balance + lamports,
+            0,
+            &DELEGATION_PROGRAM_ID,
+        )
+        .await?;
 
     let pubkey = account.pubkey();
     let system_program_id = system_program::ID;
@@ -65,5 +61,9 @@ pub async fn process_delegate_on_curve(
         data,
     };
 
-    process_instruction_with_signer(program_context, instruction, payer, account).await
+    endpoint
+        .process_instruction_with_signers(instruction, payer, &[account])
+        .await?;
+
+    Ok(())
 }
