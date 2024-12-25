@@ -5499,9 +5499,9 @@ dependencies = [
 
 [[package]]
 name = "solana_toolbox_endpoint"
-version = "0.1.1-solana-1.18.26"
+version = "0.1.3-solana-1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "182157760f389f54f3fe4e241d9dbc8d872944e8e5b5e24088f1bdcfd6735c47"
+checksum = "734236c0c75d8c7487b7f70b99f6ea443f565445eec820c9fb7b8d648083aea9"
 dependencies = [
  "async-trait",
  "bincode",

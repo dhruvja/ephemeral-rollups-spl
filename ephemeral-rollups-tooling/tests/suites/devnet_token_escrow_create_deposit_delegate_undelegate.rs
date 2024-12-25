@@ -19,11 +19,11 @@ use crate::api::program_wrapper::process_token_vault_init::process_token_vault_i
 
 #[tokio::test]
 async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), EndpointError> {
-    let endpoint_chain = Endpoint::from(RpcClient::new_with_commitment(
+    let mut endpoint_chain = Endpoint::from(RpcClient::new_with_commitment(
         "https://api.devnet.solana.com".to_string(),
         CommitmentConfig::confirmed(),
     ));
-    let endpoint_ephem = Endpoint::from(RpcClient::new_with_commitment(
+    let mut endpoint_ephem = Endpoint::from(RpcClient::new_with_commitment(
         "https://devnet.magicblock.app".to_string(),
         CommitmentConfig::confirmed(),
     ));
@@ -49,12 +49,12 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     // Create token mint
     let token_mint = Keypair::new();
     endpoint_chain
-        .process_spl_token_mint_create(&payer_chain, &token_mint, &token_mint.pubkey(), 6)
+        .process_spl_token_mint_init(&payer_chain, &token_mint, &token_mint.pubkey(), 6)
         .await?;
 
     // Airdrop token to our chain_input wallet
     let chain_input_token = endpoint_chain
-        .process_spl_associated_token_account_get_or_create(
+        .process_spl_associated_token_account_get_or_init(
             &payer_chain,
             &token_mint.pubkey(),
             &chain_input.pubkey(),
@@ -231,7 +231,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
 
     // Just for fun, we should now be able to withdraw funds on-chain
     let chain_output_token = endpoint_chain
-        .process_spl_associated_token_account_get_or_create(
+        .process_spl_associated_token_account_get_or_init(
             &payer_chain,
             &token_mint.pubkey(),
             &chain_output,

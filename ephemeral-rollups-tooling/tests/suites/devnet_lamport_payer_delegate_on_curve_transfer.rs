@@ -8,11 +8,11 @@ use crate::api::program_delegation::process_delegate_on_curve::process_delegate_
 
 #[tokio::test]
 async fn devnet_lamport_payer_delegate_on_curve_transfer() -> Result<(), EndpointError> {
-    let endpoint_chain = Endpoint::from(RpcClient::new_with_commitment(
+    let mut endpoint_chain = Endpoint::from(RpcClient::new_with_commitment(
         "https://api.devnet.solana.com".to_string(),
         CommitmentConfig::confirmed(),
     ));
-    let endpoint_ephem = Endpoint::from(RpcClient::new_with_commitment(
+    let mut endpoint_ephem = Endpoint::from(RpcClient::new_with_commitment(
         "https://devnet.magicblock.app".to_string(),
         CommitmentConfig::confirmed(),
     ));
@@ -53,14 +53,12 @@ async fn devnet_lamport_payer_delegate_on_curve_transfer() -> Result<(), Endpoin
         endpoint_ephem
             .get_account_lamports(&payer_ephem1.pubkey())
             .await?
-            .unwrap()
     );
     assert_eq!(
         rent_minimum_balance + 2_500_000,
         endpoint_ephem
             .get_account_lamports(&payer_ephem2.pubkey())
             .await?
-            .unwrap()
     );
 
     // Done

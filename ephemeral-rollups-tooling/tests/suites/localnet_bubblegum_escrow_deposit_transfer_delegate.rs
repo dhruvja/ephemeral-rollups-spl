@@ -8,7 +8,7 @@ use solana_sdk::signer::Signer;
 use solana_toolbox_endpoint::{Endpoint, EndpointError};
 use spl_merkle_tree_reference::{MerkleTree, Node};
 
-use crate::api::endpoint::create_program_test_context::create_program_test_context;
+use crate::api::create_program_test_context::create_program_test_context;
 use crate::api::program_bubblegum::process_create_tree::process_create_tree;
 use crate::api::program_bubblegum::process_mint::process_mint;
 

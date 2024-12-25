@@ -10,11 +10,7 @@ pub async fn wait_until_undelegation(
 ) -> Result<(), EndpointError> {
     let start = Instant::now();
     loop {
-        let account_owner = endpoint
-            .get_account_owner(&account)
-            .await?
-            .unwrap_or_default();
-        if account_owner != DELEGATION_PROGRAM_ID {
+        if endpoint.get_account_owner(&account).await? != DELEGATION_PROGRAM_ID {
             break; // Alternatively we could look into the logs of the account
         }
         if start.elapsed() > Duration::from_secs(10) {

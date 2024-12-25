@@ -134,14 +134,12 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), E
         endpoint_ephem
             .get_account_lamports(&authority1_lamport_escrow_pda)
             .await?
-            .unwrap()
     );
     assert_eq!(
         400_000,
         endpoint_ephem
             .get_account_lamports(&authority2_lamport_escrow_pda)
             .await?
-            .unwrap()
     );
 
     // Move some funds back to where it came from
@@ -162,14 +160,12 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate() -> Result<(), E
         endpoint_ephem
             .get_account_lamports(&authority1_lamport_escrow_pda)
             .await?
-            .unwrap()
     );
     assert_eq!(
         300_000,
         endpoint_ephem
             .get_account_lamports(&authority2_lamport_escrow_pda)
             .await?
-            .unwrap()
     );
 
     // Undelegate everything

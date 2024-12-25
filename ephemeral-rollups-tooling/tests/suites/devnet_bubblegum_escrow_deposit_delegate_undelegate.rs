@@ -22,11 +22,11 @@ use crate::api::program_wrapper::process_bubblegum_escrow_withdraw::process_bubb
 
 #[tokio::test]
 async fn devnet_bubblegum_escrow_deposit_delegate_undelegate() -> Result<(), EndpointError> {
-    let endpoint_chain = Endpoint::from(RpcClient::new_with_commitment(
+    let mut endpoint_chain = Endpoint::from(RpcClient::new_with_commitment(
         "https://api.devnet.solana.com".to_string(),
         CommitmentConfig::confirmed(),
     ));
-    let endpoint_ephem = Endpoint::from(RpcClient::new_with_commitment(
+    let mut endpoint_ephem = Endpoint::from(RpcClient::new_with_commitment(
         "https://devnet.magicblock.app".to_string(),
         CommitmentConfig::confirmed(),
     ));
