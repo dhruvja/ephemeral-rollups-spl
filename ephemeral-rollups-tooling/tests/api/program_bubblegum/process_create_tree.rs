@@ -40,7 +40,7 @@ pub async fn process_create_tree(
         .process_instructions_with_signers(
             &[create_account_instruction, create_config_instruction],
             payer,
-            &[minter],
+            &[tree, minter],
         )
         .await?;
 
