@@ -2,23 +2,18 @@ use ephemeral_rollups_wrapper::state::token_escrow::TokenEscrow;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_toolbox_endpoint::{Endpoint, EndpointError};
 
-use crate::api::program_context::create_program_test_context::create_program_test_context;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::read_account_borsh;
-use crate::api::program_spl::process_associated_token_account_get_or_init::process_associated_token_account_get_or_init;
-use crate::api::program_spl::process_token_mint_init::process_token_mint_init;
-use crate::api::program_spl::process_token_mint_to::process_token_mint_to;
+use crate::api::create_program_test_context::create_program_test_context;
+
 use crate::api::program_wrapper::process_token_escrow_create::process_token_escrow_create;
 use crate::api::program_wrapper::process_token_escrow_delegate::process_token_escrow_delegate;
 use crate::api::program_wrapper::process_token_escrow_deposit::process_token_escrow_deposit;
 use crate::api::program_wrapper::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
-async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramError> {
-    let mut program_context: Box<dyn ProgramContext> =
-        Box::new(create_program_test_context().await);
+async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), EndpointError> {
+    let mut endpoint = Endpoint::from(create_program_test_context().await);
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -28,38 +23,33 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
     let authority = Keypair::new();
 
     // Fund payer
-    program_context
+    endpoint
         .process_airdrop(&payer.pubkey(), 1_000_000_000_000)
         .await?;
 
     // Create token mint
     let token_mint = Keypair::new();
-    process_token_mint_init(
-        &mut program_context,
-        &payer,
-        &token_mint,
-        6,
-        &token_mint.pubkey(),
-    )
-    .await?;
+    endpoint
+        .process_spl_token_mint_init(&payer, &token_mint, &token_mint.pubkey(), 6)
+        .await?;
 
     // Airdrop token to our source wallet
-    let source_token = process_associated_token_account_get_or_init(
-        &mut program_context,
-        &payer,
-        &token_mint.pubkey(),
-        &source.pubkey(),
-    )
-    .await?;
-    process_token_mint_to(
-        &mut program_context,
-        &payer,
-        &token_mint.pubkey(),
-        &token_mint,
-        &source_token,
-        100_000_000,
-    )
-    .await?;
+    let source_token = endpoint
+        .process_spl_associated_token_account_get_or_init(
+            &payer,
+            &token_mint.pubkey(),
+            &source.pubkey(),
+        )
+        .await?;
+    endpoint
+        .process_spl_token_mint_to(
+            &payer,
+            &token_mint.pubkey(),
+            &token_mint,
+            &source_token,
+            100_000_000,
+        )
+        .await?;
 
     // Escrow account we will be creating
     let authority_token_escrow_slot = 99;
@@ -72,17 +62,11 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
     );
 
     // Prepare being able to escrow token for this validator
-    process_token_vault_init(
-        &mut program_context,
-        &payer,
-        &validator,
-        &token_mint.pubkey(),
-    )
-    .await?;
+    process_token_vault_init(&mut endpoint, &payer, &validator, &token_mint.pubkey()).await?;
 
     // Create an escrow
     process_token_escrow_create(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &authority.pubkey(),
         &validator,
@@ -94,14 +78,16 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
     // No balance yet
     assert_eq!(
         0,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority_token_escrow_pda)
+        endpoint
+            .get_account_data_borsh_deserialized::<TokenEscrow>(&authority_token_escrow_pda)
             .await?
+            .unwrap()
             .amount
     );
 
     // Fund the escrow
     process_token_escrow_deposit(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &source,
         &source_token,
@@ -116,14 +102,16 @@ async fn localnet_token_escrow_create_deposit_delegate() -> Result<(), ProgramEr
     // New balance
     assert_eq!(
         10_000_000,
-        read_account_borsh::<TokenEscrow>(&mut program_context, &authority_token_escrow_pda)
+        endpoint
+            .get_account_data_borsh_deserialized::<TokenEscrow>(&authority_token_escrow_pda)
             .await?
+            .unwrap()
             .amount
     );
 
     // Delegate the balance we just deposited
     process_token_escrow_delegate(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &authority,
         &validator,

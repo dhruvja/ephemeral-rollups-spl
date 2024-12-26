@@ -5,22 +5,20 @@ use mpl_bubblegum::utils::get_asset_id;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_toolbox_endpoint::{Endpoint, EndpointError};
 use spl_merkle_tree_reference::{MerkleTree, Node};
 
+use crate::api::create_program_test_context::create_program_test_context;
 use crate::api::program_bubblegum::process_create_tree::process_create_tree;
 use crate::api::program_bubblegum::process_mint::process_mint;
-use crate::api::program_context::create_program_test_context::create_program_test_context;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-use crate::api::program_context::read_account::read_account_borsh;
+
 use crate::api::program_wrapper::process_bubblegum_escrow_delegate::process_bubblegum_escrow_delegate;
 use crate::api::program_wrapper::process_bubblegum_escrow_deposit::process_bubblegum_escrow_deposit;
 use crate::api::program_wrapper::process_bubblegum_escrow_transfer::process_bubblegum_escrow_transfer;
 
 #[tokio::test]
-async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), ProgramError> {
-    let mut program_context: Box<dyn ProgramContext> =
-        Box::new(create_program_test_context().await);
+async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), EndpointError> {
+    let mut endpoint = Endpoint::from(create_program_test_context().await);
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -36,13 +34,13 @@ async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), Pro
     let source = Keypair::new();
 
     // Fund payer
-    program_context
+    endpoint
         .process_airdrop(&payer.pubkey(), 1_000_000_000_000)
         .await?;
 
     // Create the bubblegum tree
     process_create_tree(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &bubblegum_minter,
         &bubblegum_tree,
@@ -75,7 +73,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), Pro
 
     // Mint the new nft to the "source"
     process_mint(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &bubblegum_minter,
         &bubblegum_tree.pubkey(),
@@ -107,7 +105,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), Pro
 
     // Create a new bubblegum escrow (owned by authority1)
     process_bubblegum_escrow_deposit(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &authority1.pubkey(),
         &validator,
@@ -132,8 +130,10 @@ async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), Pro
     // The authority1 must now be the escrow authority1
     assert_eq!(
         authority1.pubkey(),
-        read_account_borsh::<BubblegumEscrow>(&mut program_context, &bubblegum_escrow_pda)
+        endpoint
+            .get_account_data_borsh_deserialized::<BubblegumEscrow>(&bubblegum_escrow_pda)
             .await?
+            .unwrap()
             .authority
     );
 
@@ -153,7 +153,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), Pro
 
     // Transfer the ownership to authority2
     process_bubblegum_escrow_transfer(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &authority1,
         &authority2.pubkey(),
@@ -166,14 +166,16 @@ async fn localnet_bubblegum_escrow_deposit_transfer_delegate() -> Result<(), Pro
     // The authority2 must now be the escrow authority
     assert_eq!(
         authority2.pubkey(),
-        read_account_borsh::<BubblegumEscrow>(&mut program_context, &bubblegum_escrow_pda)
+        endpoint
+            .get_account_data_borsh_deserialized::<BubblegumEscrow>(&bubblegum_escrow_pda)
             .await?
+            .unwrap()
             .authority
     );
 
     // Delegate it after the transfer
     process_bubblegum_escrow_delegate(
-        &mut program_context,
+        &mut endpoint,
         &payer,
         &authority2,
         &validator,

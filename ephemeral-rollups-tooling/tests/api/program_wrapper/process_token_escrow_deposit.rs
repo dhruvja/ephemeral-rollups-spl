@@ -1,15 +1,12 @@
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
+use solana_toolbox_endpoint::{Endpoint, EndpointError};
 
 use ephemeral_rollups_wrapper::instruction::token_escrow_deposit;
 
-use crate::api::program_context::process_instruction::process_instruction_with_signer;
-use crate::api::program_context::program_context_trait::ProgramContext;
-use crate::api::program_context::program_error::ProgramError;
-
 pub async fn process_token_escrow_deposit(
-    program_context: &mut Box<dyn ProgramContext>,
+    endpoint: &mut Endpoint,
     payer: &Keypair,
     source_authority: &Keypair,
     source_token_account: &Pubkey,
@@ -18,7 +15,7 @@ pub async fn process_token_escrow_deposit(
     token_mint: &Pubkey,
     slot: u64,
     amount: u64,
-) -> Result<(), ProgramError> {
+) -> Result<(), EndpointError> {
     let instruction = token_escrow_deposit::instruction(
         &source_authority.pubkey(),
         source_token_account,
@@ -28,5 +25,8 @@ pub async fn process_token_escrow_deposit(
         slot,
         amount,
     );
-    process_instruction_with_signer(program_context, instruction, payer, source_authority).await
+    endpoint
+        .process_instruction_with_signers(instruction, payer, &[source_authority])
+        .await?;
+    Ok(())
 }
