@@ -43,8 +43,8 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
     let source_token = endpoint
         .process_spl_associated_token_account_get_or_init(
             &payer,
-            &token_mint.pubkey(),
             &source.pubkey(),
+            &token_mint.pubkey(),
         )
         .await?;
     endpoint
@@ -268,8 +268,8 @@ async fn localnet_token_escrow_create_deposit_transfer_withdraw() -> Result<(), 
     let destination_token = endpoint
         .process_spl_associated_token_account_get_or_init(
             &payer,
-            &token_mint.pubkey(),
             &destination.pubkey(),
+            &token_mint.pubkey(),
         )
         .await?;
 

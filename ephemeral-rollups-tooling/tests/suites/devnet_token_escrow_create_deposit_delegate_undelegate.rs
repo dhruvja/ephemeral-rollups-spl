@@ -56,8 +56,8 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     let chain_input_token = endpoint_chain
         .process_spl_associated_token_account_get_or_init(
             &payer_chain,
-            &token_mint.pubkey(),
             &chain_input.pubkey(),
+            &token_mint.pubkey(),
         )
         .await?;
     endpoint_chain
@@ -233,8 +233,8 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     let chain_output_token = endpoint_chain
         .process_spl_associated_token_account_get_or_init(
             &payer_chain,
-            &token_mint.pubkey(),
             &chain_output,
+            &token_mint.pubkey(),
         )
         .await?;
 

@@ -8,7 +8,7 @@ edition = "2021"
 default = []
 
 [dev-dependencies]
-solana_toolbox_endpoint = "0.1.3-solana-1.18.26"
+solana_toolbox_endpoint = "0.1.5-solana-1.18.26"
 
 ephemeral-rollups-sdk = "0.0.7"
 ephemeral-rollups-wrapper = { path = "../ephemeral-rollups-wrapper" }
