@@ -16,14 +16,16 @@ use crate::api::program_wrapper::process_lamport_escrow_undelegate::process_lamp
 #[tokio::test]
 async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
 ) -> Result<(), ToolboxEndpointError> {
-    let mut endpoint_chain = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://api.devnet.solana.com".to_string(),
-        CommitmentConfig::confirmed(),
-    );
-    let mut endpoint_ephem = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://devnet.magicblock.app".to_string(),
-        CommitmentConfig::confirmed(),
-    );
+    let mut toolbox_endpoint_chain =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://api.devnet.solana.com".to_string(),
+            CommitmentConfig::confirmed(),
+        );
+    let mut toolbox_endpoint_ephem =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://devnet.magicblock.app".to_string(),
+            CommitmentConfig::confirmed(),
+        );
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
     let payer_chain = Keypair::from_bytes(&[
@@ -33,7 +35,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
         83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225, 247, 70,
         96,
     ])
-    .map_err(|e| ToolboxEndpointError::Signature(e.to_string()))?;
+    .unwrap();
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -59,12 +61,13 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
         &ephemeral_rollups_wrapper::ID,
     );
 
-    let lamport_escrow_rent =
-        endpoint_chain.get_rent_minimum_balance(LamportEscrow::space()).await?;
+    let lamport_escrow_rent = toolbox_endpoint_chain
+        .get_rent_minimum_balance(LamportEscrow::space())
+        .await?;
 
     // Create a new lamport escrow
     process_lamport_escrow_create(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1.pubkey(),
         &validator,
@@ -73,7 +76,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     .await?;
 
     // Send some lamports to the escrow from somewhere
-    endpoint_chain
+    toolbox_endpoint_chain
         .process_system_transfer(
             &payer_chain,
             &payer_chain,
@@ -84,7 +87,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
 
     // Delegate it immediately
     process_lamport_escrow_delegate(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1,
         &validator,
@@ -94,7 +97,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
 
     // Create another escrow
     process_lamport_escrow_create(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority2.pubkey(),
         &validator,
@@ -104,7 +107,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
 
     // Delegate it too
     process_lamport_escrow_delegate(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority2,
         &validator,
@@ -115,7 +118,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem = Keypair::new();
     process_delegate_on_curve(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &payer_ephem,
         1_000_000,
@@ -126,7 +129,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     // Claim some funds from the escrow toward the other one (from inside the
     // ER)
     process_lamport_escrow_claim(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority1,
         &authority2_lamport_escrow_pda, // other escrow is the receiver
@@ -139,20 +142,20 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     // Check that the lamports have appeared in the ER
     assert_eq!(
         lamport_escrow_rent + 600_000,
-        endpoint_ephem
+        toolbox_endpoint_ephem
             .get_account_lamports(&authority1_lamport_escrow_pda)
             .await?
     );
     assert_eq!(
         400_000,
-        endpoint_ephem
+        toolbox_endpoint_ephem
             .get_account_lamports(&authority2_lamport_escrow_pda)
             .await?
     );
 
     // Move some funds back to where it came from
     process_lamport_escrow_claim(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority2,
         &authority1_lamport_escrow_pda, // other escrow is the receiver
@@ -165,20 +168,20 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     // Check that the lamports have moved in the ER
     assert_eq!(
         lamport_escrow_rent + 700_000,
-        endpoint_ephem
+        toolbox_endpoint_ephem
             .get_account_lamports(&authority1_lamport_escrow_pda)
             .await?
     );
     assert_eq!(
         300_000,
-        endpoint_ephem
+        toolbox_endpoint_ephem
             .get_account_lamports(&authority2_lamport_escrow_pda)
             .await?
     );
 
     // Undelegate everything
     process_lamport_escrow_undelegate(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority1,
         &validator,
@@ -186,7 +189,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     )
     .await?;
     process_lamport_escrow_undelegate(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority2,
         &validator,
@@ -196,19 +199,19 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
 
     // Wait for undelegation to succeed
     wait_until_undelegation(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &authority1_lamport_escrow_pda,
     )
     .await?;
     wait_until_undelegation(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &authority2_lamport_escrow_pda,
     )
     .await?;
 
     // For fun, we should be able to claim lamports back on chain now
     process_lamport_escrow_claim(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1,
         &chain_output,
@@ -218,7 +221,7 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     )
     .await?;
     process_lamport_escrow_claim(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority2,
         &chain_output,

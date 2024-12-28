@@ -29,14 +29,16 @@ use crate::api::program_wrapper::process_bubblegum_escrow_withdraw::process_bubb
 #[tokio::test]
 async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
 ) -> Result<(), ToolboxEndpointError> {
-    let mut endpoint_chain = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://api.devnet.solana.com".to_string(),
-        CommitmentConfig::confirmed(),
-    );
-    let mut endpoint_ephem = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://devnet.magicblock.app".to_string(),
-        CommitmentConfig::confirmed(),
-    );
+    let mut toolbox_endpoint_chain =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://api.devnet.solana.com".to_string(),
+            CommitmentConfig::confirmed(),
+        );
+    let mut toolbox_endpoint_ephem =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://devnet.magicblock.app".to_string(),
+            CommitmentConfig::confirmed(),
+        );
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
     let payer_chain = Keypair::from_bytes(&[
@@ -46,7 +48,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
         83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225, 247, 70,
         96,
     ])
-    .map_err(|e| ToolboxEndpointError::Signature(e.to_string()))?;
+    .unwrap();
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -62,7 +64,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
 
     // Create the bubblegum tree
     process_create_tree(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &bubblegum_minter,
         &bubblegum_tree,
@@ -97,7 +99,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
 
     // Mint the new nft to the "chain_input"
     process_mint(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &bubblegum_minter,
         &bubblegum_tree.pubkey(),
@@ -132,7 +134,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
 
     // Create a new bubblegum escrow (owned by authority1)
     process_bubblegum_escrow_deposit(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1.pubkey(),
         &validator,
@@ -157,7 +159,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
     // The authority1 must now be the escrow authority
     assert_eq!(
         authority1.pubkey(),
-        endpoint_chain
+        toolbox_endpoint_chain
             .get_account_data_borsh_deserialized::<BubblegumEscrow>(
                 &bubblegum_escrow_pda
             )
@@ -182,7 +184,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
 
     // Delegate the escrow
     process_bubblegum_escrow_delegate(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1,
         &validator,
@@ -194,7 +196,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
     // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem = Keypair::new();
     process_delegate_on_curve(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &payer_ephem,
         1_000_000,
@@ -203,7 +205,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
 
     // Transfer the ownership to authority2 from inside the ER
     process_bubblegum_escrow_transfer(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority1,
         &authority2.pubkey(),
@@ -216,7 +218,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
     // The authority2 must now be the escrow authority
     assert_eq!(
         authority2.pubkey(),
-        endpoint_ephem
+        toolbox_endpoint_ephem
             .get_account_data_borsh_deserialized::<BubblegumEscrow>(
                 &bubblegum_escrow_pda
             )
@@ -227,7 +229,7 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
 
     // Undelegate back to chain
     process_bubblegum_escrow_undelegate(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority2,
         &validator,
@@ -237,11 +239,12 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
     .await?;
 
     // Wait for undelegation to succeed
-    wait_until_undelegation(&mut endpoint_chain, &bubblegum_escrow_pda).await?;
+    wait_until_undelegation(&mut toolbox_endpoint_chain, &bubblegum_escrow_pda)
+        .await?;
 
     // Withdraw the cNFT from the escrow back to "chain_output"
     process_bubblegum_escrow_withdraw(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority2,
         &chain_output,
@@ -257,7 +260,11 @@ async fn devnet_bubblegum_escrow_deposit_delegate_undelegate(
     .await?;
 
     // The escrow must have been destroyed
-    assert!(!endpoint_chain.get_account_exists(&bubblegum_escrow_pda).await?);
+    assert!(
+        !toolbox_endpoint_chain
+            .get_account_exists(&bubblegum_escrow_pda)
+            .await?
+    );
 
     // Done
     Ok(())

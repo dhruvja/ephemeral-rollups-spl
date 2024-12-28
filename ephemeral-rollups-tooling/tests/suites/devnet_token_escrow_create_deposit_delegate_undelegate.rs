@@ -19,14 +19,16 @@ use crate::api::program_wrapper::process_token_vault_init::process_token_vault_i
 #[tokio::test]
 async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 ) -> Result<(), ToolboxEndpointError> {
-    let mut endpoint_chain = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://api.devnet.solana.com".to_string(),
-        CommitmentConfig::confirmed(),
-    );
-    let mut endpoint_ephem = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://devnet.magicblock.app".to_string(),
-        CommitmentConfig::confirmed(),
-    );
+    let mut toolbox_endpoint_chain =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://api.devnet.solana.com".to_string(),
+            CommitmentConfig::confirmed(),
+        );
+    let mut toolbox_endpoint_ephem =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://devnet.magicblock.app".to_string(),
+            CommitmentConfig::confirmed(),
+        );
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
     let payer_chain = Keypair::from_bytes(&[
@@ -36,7 +38,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
         83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225, 247, 70,
         96,
     ])
-    .map_err(|e| ToolboxEndpointError::Signature(e.to_string()))?;
+    .unwrap();
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -49,7 +51,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 
     // Create token mint
     let token_mint = Keypair::new();
-    endpoint_chain
+    toolbox_endpoint_chain
         .process_spl_token_mint_init(
             &payer_chain,
             &token_mint,
@@ -59,14 +61,14 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
         .await?;
 
     // Airdrop token to our chain_input wallet
-    let chain_input_token = endpoint_chain
+    let chain_input_token = toolbox_endpoint_chain
         .process_spl_associated_token_account_get_or_init(
             &payer_chain,
             &chain_input.pubkey(),
             &token_mint.pubkey(),
         )
         .await?;
-    endpoint_chain
+    toolbox_endpoint_chain
         .process_spl_token_mint_to(
             &payer_chain,
             &token_mint.pubkey(),
@@ -96,7 +98,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 
     // Prepare being able to escrow this token mint for this validator
     process_token_vault_init(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &validator,
         &token_mint.pubkey(),
@@ -105,7 +107,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 
     // Create all escrows
     process_token_escrow_create(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1.pubkey(),
         &validator,
@@ -114,7 +116,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     )
     .await?;
     process_token_escrow_create(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority2.pubkey(),
         &validator,
@@ -125,7 +127,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 
     // Fund the first escrow
     process_token_escrow_deposit(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &chain_input,
         &chain_input_token,
@@ -139,7 +141,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 
     // Delegate all escrows
     process_token_escrow_delegate(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1,
         &validator,
@@ -148,7 +150,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     )
     .await?;
     process_token_escrow_delegate(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority2,
         &validator,
@@ -160,7 +162,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem = Keypair::new();
     process_delegate_on_curve(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &payer_ephem,
         1_000_000,
@@ -169,7 +171,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 
     // Do a transfer between the two escrow inside of the ER
     process_token_escrow_transfer(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority1,
         &authority2.pubkey(),
@@ -184,7 +186,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     // Transfer success should be reflected in the balances inside the ER
     assert_eq!(
         9_000_000,
-        endpoint_ephem
+        toolbox_endpoint_ephem
             .get_account_data_borsh_deserialized::<TokenEscrow>(
                 &authority1_token_escrow_pda
             )
@@ -194,7 +196,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     );
     assert_eq!(
         1_000_000,
-        endpoint_ephem
+        toolbox_endpoint_ephem
             .get_account_data_borsh_deserialized::<TokenEscrow>(
                 &authority2_token_escrow_pda
             )
@@ -205,7 +207,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
 
     // Undelegate all escrows
     process_token_escrow_undelegate(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority1,
         &validator,
@@ -214,7 +216,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     )
     .await?;
     process_token_escrow_undelegate(
-        &mut endpoint_ephem,
+        &mut toolbox_endpoint_ephem,
         &payer_ephem,
         &authority2,
         &validator,
@@ -224,15 +226,21 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     .await?;
 
     // Wait for undelegations to succeed
-    wait_until_undelegation(&mut endpoint_chain, &authority1_token_escrow_pda)
-        .await?;
-    wait_until_undelegation(&mut endpoint_chain, &authority2_token_escrow_pda)
-        .await?;
+    wait_until_undelegation(
+        &mut toolbox_endpoint_chain,
+        &authority1_token_escrow_pda,
+    )
+    .await?;
+    wait_until_undelegation(
+        &mut toolbox_endpoint_chain,
+        &authority2_token_escrow_pda,
+    )
+    .await?;
 
     // Transfer success should be reflected in the balances on the chain
     assert_eq!(
         9_000_000,
-        endpoint_chain
+        toolbox_endpoint_chain
             .get_account_data_borsh_deserialized::<TokenEscrow>(
                 &authority1_token_escrow_pda
             )
@@ -242,7 +250,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     );
     assert_eq!(
         1_000_000,
-        endpoint_chain
+        toolbox_endpoint_chain
             .get_account_data_borsh_deserialized::<TokenEscrow>(
                 &authority2_token_escrow_pda
             )
@@ -252,7 +260,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     );
 
     // Just for fun, we should now be able to withdraw funds on-chain
-    let chain_output_token = endpoint_chain
+    let chain_output_token = toolbox_endpoint_chain
         .process_spl_associated_token_account_get_or_init(
             &payer_chain,
             &chain_output,
@@ -261,7 +269,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
         .await?;
 
     process_token_escrow_withdraw(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority1,
         &chain_output_token,
@@ -272,7 +280,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     )
     .await?;
     process_token_escrow_withdraw(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &authority2,
         &chain_output_token,
@@ -286,7 +294,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate(
     // Verify that the on-chain chain_output token account now has our tokens
     assert_eq!(
         10_000_000,
-        endpoint_chain
+        toolbox_endpoint_chain
             .get_spl_token_account(&chain_output_token)
             .await?
             .unwrap()

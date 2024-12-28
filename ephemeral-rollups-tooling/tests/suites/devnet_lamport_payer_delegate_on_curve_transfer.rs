@@ -9,14 +9,16 @@ use crate::api::program_delegation::process_delegate_on_curve::process_delegate_
 #[tokio::test]
 async fn devnet_lamport_payer_delegate_on_curve_transfer(
 ) -> Result<(), ToolboxEndpointError> {
-    let mut endpoint_chain = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://api.devnet.solana.com".to_string(),
-        CommitmentConfig::confirmed(),
-    );
-    let mut endpoint_ephem = ToolboxEndpoint::new_rpc_with_url_and_commitment(
-        "https://devnet.magicblock.app".to_string(),
-        CommitmentConfig::confirmed(),
-    );
+    let mut toolbox_endpoint_chain =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://api.devnet.solana.com".to_string(),
+            CommitmentConfig::confirmed(),
+        );
+    let mut toolbox_endpoint_ephem =
+        ToolboxEndpoint::new_rpc_with_url_and_commitment(
+            "https://devnet.magicblock.app".to_string(),
+            CommitmentConfig::confirmed(),
+        );
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
     let payer_chain = Keypair::from_bytes(&[
@@ -26,12 +28,12 @@ async fn devnet_lamport_payer_delegate_on_curve_transfer(
         83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225, 247, 70,
         96,
     ])
-    .map_err(|e| ToolboxEndpointError::Signature(e.to_string()))?;
+    .unwrap();
 
     // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem1 = Keypair::new();
     process_delegate_on_curve(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &payer_ephem1,
         1_000_000,
@@ -41,7 +43,7 @@ async fn devnet_lamport_payer_delegate_on_curve_transfer(
     // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem2 = Keypair::new();
     process_delegate_on_curve(
-        &mut endpoint_chain,
+        &mut toolbox_endpoint_chain,
         &payer_chain,
         &payer_ephem2,
         3_000_000,
@@ -49,7 +51,7 @@ async fn devnet_lamport_payer_delegate_on_curve_transfer(
     .await?;
 
     // Transfer lamports between the payers in the ER
-    endpoint_ephem
+    toolbox_endpoint_ephem
         .process_system_transfer(
             &payer_ephem2,
             &payer_ephem2,
@@ -60,16 +62,20 @@ async fn devnet_lamport_payer_delegate_on_curve_transfer(
 
     // Account base rent needs to be taken into account
     let rent_minimum_balance =
-        endpoint_chain.get_rent_minimum_balance(0).await?;
+        toolbox_endpoint_chain.get_rent_minimum_balance(0).await?;
 
     // Check the balances
     assert_eq!(
         rent_minimum_balance + 1_500_000,
-        endpoint_ephem.get_account_lamports(&payer_ephem1.pubkey()).await?
+        toolbox_endpoint_ephem
+            .get_account_lamports(&payer_ephem1.pubkey())
+            .await?
     );
     assert_eq!(
         rent_minimum_balance + 2_500_000,
-        endpoint_ephem.get_account_lamports(&payer_ephem2.pubkey()).await?
+        toolbox_endpoint_ephem
+            .get_account_lamports(&payer_ephem2.pubkey())
+            .await?
     );
 
     // Done
