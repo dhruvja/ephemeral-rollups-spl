@@ -1,4 +1,6 @@
-use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use solana_program::account_info::AccountInfo;
+use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
 
 pub fn ensure_is_signer(account: &AccountInfo) -> Result<(), ProgramError> {
     if !account.is_signer {

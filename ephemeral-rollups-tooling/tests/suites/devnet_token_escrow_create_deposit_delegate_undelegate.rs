@@ -1,11 +1,10 @@
 use ephemeral_rollups_wrapper::state::token_escrow::TokenEscrow;
-use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
-use spl_token::state::Account;
+use solana_toolbox_endpoint::ToolboxEndpoint;
+use solana_toolbox_endpoint::ToolboxEndpointError;
 
 use crate::api::program_delegation::process_delegate_on_curve::process_delegate_on_curve;
 use crate::api::program_delegation::wait_until_undelegation::wait_until_undelegation;
@@ -18,24 +17,26 @@ use crate::api::program_wrapper::process_token_escrow_withdraw::process_token_es
 use crate::api::program_wrapper::process_token_vault_init::process_token_vault_init;
 
 #[tokio::test]
-async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), EndpointError> {
-    let mut endpoint_chain = Endpoint::from(RpcClient::new_with_commitment(
+async fn devnet_token_escrow_create_deposit_delegate_undelegate(
+) -> Result<(), ToolboxEndpointError> {
+    let mut endpoint_chain = ToolboxEndpoint::new_rpc_with_url_and_commitment(
         "https://api.devnet.solana.com".to_string(),
         CommitmentConfig::confirmed(),
-    ));
-    let mut endpoint_ephem = Endpoint::from(RpcClient::new_with_commitment(
+    );
+    let mut endpoint_ephem = ToolboxEndpoint::new_rpc_with_url_and_commitment(
         "https://devnet.magicblock.app".to_string(),
         CommitmentConfig::confirmed(),
-    ));
+    );
 
     // Devnet dummy payer: Payi9ovX2Tbe69XuUdgav5qS3sVnNAn2dN8BZoAQwyq
     let payer_chain = Keypair::from_bytes(&[
-        243, 85, 166, 238, 237, 2, 46, 208, 68, 40, 98, 2, 148, 117, 134, 238, 144, 223, 165, 108,
-        203, 120, 96, 89, 172, 223, 98, 26, 162, 92, 234, 167, 5, 201, 50, 82, 10, 153, 196, 60,
-        132, 31, 123, 66, 63, 113, 122, 83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225,
-        247, 70, 96,
+        243, 85, 166, 238, 237, 2, 46, 208, 68, 40, 98, 2, 148, 117, 134, 238,
+        144, 223, 165, 108, 203, 120, 96, 89, 172, 223, 98, 26, 162, 92, 234,
+        167, 5, 201, 50, 82, 10, 153, 196, 60, 132, 31, 123, 66, 63, 113, 122,
+        83, 145, 102, 200, 15, 46, 50, 207, 1, 6, 109, 0, 216, 225, 247, 70,
+        96,
     ])
-    .map_err(|e| EndpointError::Signature(e.to_string()))?;
+    .map_err(|e| ToolboxEndpointError::Signature(e.to_string()))?;
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -49,7 +50,12 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     // Create token mint
     let token_mint = Keypair::new();
     endpoint_chain
-        .process_spl_token_mint_init(&payer_chain, &token_mint, &token_mint.pubkey(), 6)
+        .process_spl_token_mint_init(
+            &payer_chain,
+            &token_mint,
+            &token_mint.pubkey(),
+            6,
+        )
         .await?;
 
     // Airdrop token to our chain_input wallet
@@ -153,7 +159,13 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
 
     // Ephemeral dummy payer, delegate it to be used in the ER
     let payer_ephem = Keypair::new();
-    process_delegate_on_curve(&mut endpoint_chain, &payer_chain, &payer_ephem, 1_000_000).await?;
+    process_delegate_on_curve(
+        &mut endpoint_chain,
+        &payer_chain,
+        &payer_ephem,
+        1_000_000,
+    )
+    .await?;
 
     // Do a transfer between the two escrow inside of the ER
     process_token_escrow_transfer(
@@ -173,7 +185,9 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     assert_eq!(
         9_000_000,
         endpoint_ephem
-            .get_account_data_borsh_deserialized::<TokenEscrow>(&authority1_token_escrow_pda)
+            .get_account_data_borsh_deserialized::<TokenEscrow>(
+                &authority1_token_escrow_pda
+            )
             .await?
             .unwrap()
             .amount
@@ -181,7 +195,9 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     assert_eq!(
         1_000_000,
         endpoint_ephem
-            .get_account_data_borsh_deserialized::<TokenEscrow>(&authority2_token_escrow_pda)
+            .get_account_data_borsh_deserialized::<TokenEscrow>(
+                &authority2_token_escrow_pda
+            )
             .await?
             .unwrap()
             .amount
@@ -208,14 +224,18 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     .await?;
 
     // Wait for undelegations to succeed
-    wait_until_undelegation(&mut endpoint_chain, &authority1_token_escrow_pda).await?;
-    wait_until_undelegation(&mut endpoint_chain, &authority2_token_escrow_pda).await?;
+    wait_until_undelegation(&mut endpoint_chain, &authority1_token_escrow_pda)
+        .await?;
+    wait_until_undelegation(&mut endpoint_chain, &authority2_token_escrow_pda)
+        .await?;
 
     // Transfer success should be reflected in the balances on the chain
     assert_eq!(
         9_000_000,
         endpoint_chain
-            .get_account_data_borsh_deserialized::<TokenEscrow>(&authority1_token_escrow_pda)
+            .get_account_data_borsh_deserialized::<TokenEscrow>(
+                &authority1_token_escrow_pda
+            )
             .await?
             .unwrap()
             .amount
@@ -223,7 +243,9 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     assert_eq!(
         1_000_000,
         endpoint_chain
-            .get_account_data_borsh_deserialized::<TokenEscrow>(&authority2_token_escrow_pda)
+            .get_account_data_borsh_deserialized::<TokenEscrow>(
+                &authority2_token_escrow_pda
+            )
             .await?
             .unwrap()
             .amount
@@ -265,7 +287,7 @@ async fn devnet_token_escrow_create_deposit_delegate_undelegate() -> Result<(), 
     assert_eq!(
         10_000_000,
         endpoint_chain
-            .get_account_data_unpacked::<Account>(&chain_output_token)
+            .get_spl_token_account(&chain_output_token)
             .await?
             .unwrap()
             .amount

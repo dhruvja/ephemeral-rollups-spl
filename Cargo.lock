@@ -1560,15 +1560,11 @@ dependencies = [
  "ephemeral-rollups-sdk",
  "ephemeral-rollups-wrapper",
  "mpl-bubblegum",
- "solana-client",
- "solana-program-test",
  "solana-sdk",
  "solana_toolbox_endpoint",
  "spl-account-compression",
- "spl-associated-token-account",
  "spl-merkle-tree-reference",
  "spl-noop",
- "spl-token",
  "tokio",
 ]
 
@@ -5499,9 +5495,9 @@ dependencies = [
 
 [[package]]
 name = "solana_toolbox_endpoint"
-version = "0.1.5-solana-1.18.26"
+version = "0.1.7-solana-1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cf11b8e59b7a226dbd19d3230698c391edaec4ce981060ec599fb1284c05918"
+checksum = "966f6a78ade317bd63d97a0a2d9978d6bb77630a623f1156935549beeb230b7d"
 dependencies = [
  "async-trait",
  "bincode",

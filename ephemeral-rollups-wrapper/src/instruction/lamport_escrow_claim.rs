@@ -1,10 +1,10 @@
 use borsh::BorshSerialize;
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-};
+use solana_program::instruction::AccountMeta;
+use solana_program::instruction::Instruction;
+use solana_program::pubkey::Pubkey;
 
-use crate::{processor::lamport_escrow_claim, state::lamport_escrow::LamportEscrow};
+use crate::processor::lamport_escrow_claim;
+use crate::state::lamport_escrow::LamportEscrow;
 
 pub fn instruction(
     authority: &Pubkey,
@@ -14,7 +14,8 @@ pub fn instruction(
     lamports: u64,
 ) -> Instruction {
     let program_id = crate::ID;
-    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, slot, &program_id);
+    let lamport_escrow_pda =
+        LamportEscrow::generate_pda(authority, validator, slot, &program_id);
 
     let accounts = vec![
         AccountMeta::new_readonly(*authority, true),
@@ -24,17 +25,9 @@ pub fn instruction(
 
     let mut data = Vec::new();
     data.extend_from_slice(&lamport_escrow_claim::DISCRIMINANT);
-    lamport_escrow_claim::Args {
-        validator: *validator,
-        slot,
-        lamports,
-    }
-    .serialize(&mut data)
-    .unwrap();
+    lamport_escrow_claim::Args { validator: *validator, slot, lamports }
+        .serialize(&mut data)
+        .unwrap();
 
-    Instruction {
-        program_id,
-        accounts,
-        data,
-    }
+    Instruction { program_id, accounts, data }
 }

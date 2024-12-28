@@ -1,12 +1,12 @@
+use ephemeral_rollups_wrapper::instruction::token_escrow_deposit;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
-
-use ephemeral_rollups_wrapper::instruction::token_escrow_deposit;
+use solana_toolbox_endpoint::ToolboxEndpoint;
+use solana_toolbox_endpoint::ToolboxEndpointError;
 
 pub async fn process_token_escrow_deposit(
-    endpoint: &mut Endpoint,
+    toolbox_endpoint: &mut ToolboxEndpoint,
     payer: &Keypair,
     source_authority: &Keypair,
     source_token_account: &Pubkey,
@@ -15,7 +15,7 @@ pub async fn process_token_escrow_deposit(
     token_mint: &Pubkey,
     slot: u64,
     amount: u64,
-) -> Result<(), EndpointError> {
+) -> Result<(), ToolboxEndpointError> {
     let instruction = token_escrow_deposit::instruction(
         &source_authority.pubkey(),
         source_token_account,
@@ -25,8 +25,12 @@ pub async fn process_token_escrow_deposit(
         slot,
         amount,
     );
-    endpoint
-        .process_instruction_with_signers(instruction, payer, &[source_authority])
+    toolbox_endpoint
+        .process_instruction_with_signers(
+            instruction,
+            payer,
+            &[source_authority],
+        )
         .await?;
     Ok(())
 }

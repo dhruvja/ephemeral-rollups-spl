@@ -1,11 +1,12 @@
 use borsh::BorshSerialize;
-use ephemeral_rollups_sdk::consts::{MAGIC_CONTEXT_ID, MAGIC_PROGRAM_ID};
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-};
+use ephemeral_rollups_sdk::consts::MAGIC_CONTEXT_ID;
+use ephemeral_rollups_sdk::consts::MAGIC_PROGRAM_ID;
+use solana_program::instruction::AccountMeta;
+use solana_program::instruction::Instruction;
+use solana_program::pubkey::Pubkey;
 
-use crate::{processor::token_escrow_undelegate, state::token_escrow::TokenEscrow};
+use crate::processor::token_escrow_undelegate;
+use crate::state::token_escrow::TokenEscrow;
 
 pub fn instruction(
     payer: &Pubkey,
@@ -15,8 +16,13 @@ pub fn instruction(
     slot: u64,
 ) -> Instruction {
     let program_id = crate::ID;
-    let token_escrow_pda =
-        TokenEscrow::generate_pda(authority, validator, token_mint, slot, &program_id);
+    let token_escrow_pda = TokenEscrow::generate_pda(
+        authority,
+        validator,
+        token_mint,
+        slot,
+        &program_id,
+    );
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -36,9 +42,5 @@ pub fn instruction(
     .serialize(&mut data)
     .unwrap();
 
-    Instruction {
-        program_id,
-        accounts,
-        data,
-    }
+    Instruction { program_id, accounts, data }
 }

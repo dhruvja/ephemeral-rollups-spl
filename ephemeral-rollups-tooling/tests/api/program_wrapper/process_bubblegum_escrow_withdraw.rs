@@ -1,12 +1,12 @@
+use ephemeral_rollups_wrapper::instruction::bubblegum_escrow_withdraw;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
-
-use ephemeral_rollups_wrapper::instruction::bubblegum_escrow_withdraw;
+use solana_toolbox_endpoint::ToolboxEndpoint;
+use solana_toolbox_endpoint::ToolboxEndpointError;
 
 pub async fn process_bubblegum_escrow_withdraw(
-    endpoint: &mut Endpoint,
+    toolbox_endpoint: &mut ToolboxEndpoint,
     payer: &Keypair,
     authority: &Keypair,
     new_leaf_owner: &Pubkey,
@@ -18,7 +18,7 @@ pub async fn process_bubblegum_escrow_withdraw(
     creator_hash: &[u8; 32],
     nonce: u64,
     index: u32,
-) -> Result<(), EndpointError> {
+) -> Result<(), ToolboxEndpointError> {
     let instruction = bubblegum_escrow_withdraw::instruction(
         &authority.pubkey(),
         new_leaf_owner,
@@ -31,7 +31,7 @@ pub async fn process_bubblegum_escrow_withdraw(
         nonce,
         index,
     );
-    endpoint
+    toolbox_endpoint
         .process_instruction_with_signers(instruction, payer, &[authority])
         .await?;
     Ok(())

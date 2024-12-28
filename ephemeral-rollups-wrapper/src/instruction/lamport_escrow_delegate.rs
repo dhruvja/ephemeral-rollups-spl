@@ -1,15 +1,15 @@
 use borsh::BorshSerialize;
-use ephemeral_rollups_sdk::{
-    consts::{BUFFER, DELEGATION_PROGRAM_ID},
-    pda::{delegation_metadata_pda_from_pubkey, delegation_record_pda_from_pubkey},
-};
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-    system_program,
-};
+use ephemeral_rollups_sdk::consts::BUFFER;
+use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
+use ephemeral_rollups_sdk::pda::delegation_metadata_pda_from_pubkey;
+use ephemeral_rollups_sdk::pda::delegation_record_pda_from_pubkey;
+use solana_program::instruction::AccountMeta;
+use solana_program::instruction::Instruction;
+use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 
-use crate::{processor::lamport_escrow_delegate, state::lamport_escrow::LamportEscrow};
+use crate::processor::lamport_escrow_delegate;
+use crate::state::lamport_escrow::LamportEscrow;
 
 pub fn instruction(
     payer: &Pubkey,
@@ -18,13 +18,19 @@ pub fn instruction(
     slot: u64,
 ) -> Instruction {
     let program_id = crate::ID;
-    let lamport_escrow_pda = LamportEscrow::generate_pda(authority, validator, slot, &program_id);
+    let lamport_escrow_pda =
+        LamportEscrow::generate_pda(authority, validator, slot, &program_id);
 
-    let delegation_buffer_pda =
-        Pubkey::find_program_address(&[BUFFER, &lamport_escrow_pda.to_bytes()], &program_id).0;
+    let delegation_buffer_pda = Pubkey::find_program_address(
+        &[BUFFER, &lamport_escrow_pda.to_bytes()],
+        &program_id,
+    )
+    .0;
 
-    let delegation_record_pda = delegation_record_pda_from_pubkey(&lamport_escrow_pda);
-    let delegation_metadata_pda = delegation_metadata_pda_from_pubkey(&lamport_escrow_pda);
+    let delegation_record_pda =
+        delegation_record_pda_from_pubkey(&lamport_escrow_pda);
+    let delegation_metadata_pda =
+        delegation_metadata_pda_from_pubkey(&lamport_escrow_pda);
     let delegation_program_id = DELEGATION_PROGRAM_ID;
 
     let accounts = vec![
@@ -41,16 +47,9 @@ pub fn instruction(
 
     let mut data = Vec::new();
     data.extend_from_slice(&lamport_escrow_delegate::DISCRIMINANT);
-    lamport_escrow_delegate::Args {
-        validator: *validator,
-        slot,
-    }
-    .serialize(&mut data)
-    .unwrap();
+    lamport_escrow_delegate::Args { validator: *validator, slot }
+        .serialize(&mut data)
+        .unwrap();
 
-    Instruction {
-        program_id,
-        accounts,
-        data,
-    }
+    Instruction { program_id, accounts, data }
 }

@@ -1,17 +1,23 @@
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::BorshDeserialize;
+use borsh::BorshSerialize;
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_sdk::cpi::delegate_account;
+use solana_program::account_info::AccountInfo;
+use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
-use solana_program::{msg, system_program};
+use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 
 use crate::state::token_escrow::TokenEscrow;
 use crate::token_escrow_seeds_generator;
-use crate::util::ensure::{
-    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
-};
+use crate::util::ensure::ensure_is_owned_by_program;
+use crate::util::ensure::ensure_is_pda;
+use crate::util::ensure::ensure_is_program_id;
+use crate::util::ensure::ensure_is_signer;
 
-pub const DISCRIMINANT: [u8; 8] = [0xc6, 0xd6, 0x5c, 0x5f, 0xf8, 0xcc, 0xe0, 0x2c];
+pub const DISCRIMINANT: [u8; 8] =
+    [0xC6, 0xD6, 0x5C, 0x5F, 0xF8, 0xCC, 0xE0, 0x2C];
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
@@ -20,7 +26,11 @@ pub struct Args {
     pub slot: u64,
 }
 
-pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
+pub fn process(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    data: &[u8],
+) -> ProgramResult {
     // Read instruction inputs
     let [payer, authority, token_escrow_pda, delegation_buffer_pda, delegation_record_pda, delegation_metadata_pda, delegation_program_id, owner_program_id, system_program_id] =
         accounts
@@ -31,7 +41,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Verify the programs
     ensure_is_program_id(delegation_program_id, &DELEGATION_PROGRAM_ID)?;
-    ensure_is_program_id(owner_program_id, &program_id)?;
+    ensure_is_program_id(owner_program_id, program_id)?;
     ensure_is_program_id(system_program_id, &system_program::ID)?;
 
     // Verify that the payer is allowed to pay for the rent fees
@@ -40,21 +50,28 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Verify that the authority user is indeed the one initiating this IX
     ensure_is_signer(authority)?;
 
-    // Verify that the program has proper control of the PDA (and that it's been initialized)
+    // Verify that the program has proper control of the PDA (and that it's been
+    // initialized)
     ensure_is_owned_by_program(token_escrow_pda, program_id)?;
 
     // Verify the seeds of the escrow PDA
-    let token_escrow_seeds =
-        token_escrow_seeds_generator!(authority.key, args.validator, args.token_mint, args.slot);
+    let token_escrow_seeds = token_escrow_seeds_generator!(
+        authority.key,
+        args.validator,
+        args.token_mint,
+        args.slot
+    );
     ensure_is_pda(token_escrow_pda, token_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized
-    let token_escrow_data = TokenEscrow::try_from_slice(&token_escrow_pda.data.borrow())?;
+    let token_escrow_data =
+        TokenEscrow::try_from_slice(&token_escrow_pda.data.borrow())?;
     if token_escrow_data.discriminant != TokenEscrow::discriminant() {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Delegate the escrow, relinquish control on chain (it will become usable in the Ephem)
+    // Delegate the escrow, relinquish control on chain (it will become usable
+    // in the Ephem)
     delegate_account(
         payer,
         token_escrow_pda,

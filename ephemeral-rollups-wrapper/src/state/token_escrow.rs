@@ -1,6 +1,7 @@
 use std::mem::size_of;
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::BorshDeserialize;
+use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
 
 use crate::token_escrow_seeds_generator;
@@ -28,7 +29,9 @@ impl TokenEscrow {
         program_id: &Pubkey,
     ) -> Pubkey {
         Pubkey::find_program_address(
-            token_escrow_seeds_generator!(authority, validator, token_mint, slot),
+            token_escrow_seeds_generator!(
+                authority, validator, token_mint, slot
+            ),
             program_id,
         )
         .0
@@ -39,7 +42,7 @@ pub const TOKEN_ESCROW_SEEDS_PREFIX: &[u8] = b"token_escrow";
 
 #[macro_export]
 macro_rules! token_escrow_seeds_generator {
-    ($authority: expr, $validator: expr, $token_mint: expr, $slot: expr) => {
+    ($authority:expr, $validator:expr, $token_mint:expr, $slot:expr) => {
         &[
             $crate::state::token_escrow::TOKEN_ESCROW_SEEDS_PREFIX,
             &$authority.to_bytes(),

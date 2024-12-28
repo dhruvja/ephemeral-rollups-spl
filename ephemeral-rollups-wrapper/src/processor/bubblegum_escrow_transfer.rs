@@ -1,14 +1,20 @@
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::BorshDeserialize;
+use borsh::BorshSerialize;
 use mpl_bubblegum::utils::get_asset_id;
+use solana_program::account_info::AccountInfo;
+use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
 use solana_program::program_error::ProgramError;
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use solana_program::pubkey::Pubkey;
 
 use crate::bubblegum_escrow_seeds_generator;
 use crate::state::bubblegum_escrow::BubblegumEscrow;
-use crate::util::ensure::{ensure_is_owned_by_program, ensure_is_pda, ensure_is_signer};
+use crate::util::ensure::ensure_is_owned_by_program;
+use crate::util::ensure::ensure_is_pda;
+use crate::util::ensure::ensure_is_signer;
 
-pub const DISCRIMINANT: [u8; 8] = [0x85, 0xd7, 0x3a, 0x53, 0x9f, 0xda, 0xfa, 0x5c];
+pub const DISCRIMINANT: [u8; 8] =
+    [0x85, 0xD7, 0x3A, 0x53, 0x9F, 0xDA, 0xFA, 0x5C];
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
@@ -18,9 +24,14 @@ pub struct Args {
     pub nonce: u64,
 }
 
-pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
+pub fn process(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    data: &[u8],
+) -> ProgramResult {
     // Read instruction inputs
-    let [source_authority, bubblegum_escrow_pda] = accounts else {
+    let [source_authority, bubblegum_escrow_pda] = accounts
+    else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
@@ -28,14 +39,16 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     // Verify that the authority user is indeed the one initiating this IX
     ensure_is_signer(source_authority)?;
 
-    // Verify that the program has proper control of the escrow PDA (and that it's been initialized)
+    // Verify that the program has proper control of the escrow PDA (and that
+    // it's been initialized)
     ensure_is_owned_by_program(bubblegum_escrow_pda, program_id)?;
 
     // Which cNFT is being escrowed
     let asset = get_asset_id(&args.tree, args.nonce);
 
     // Verify the seeds of the escrow PDA
-    let bubblegum_escrow_seeds = bubblegum_escrow_seeds_generator!(args.validator, asset);
+    let bubblegum_escrow_seeds =
+        bubblegum_escrow_seeds_generator!(args.validator, asset);
     ensure_is_pda(bubblegum_escrow_pda, bubblegum_escrow_seeds, program_id)?;
 
     // Verify that the escrow PDA is properly initalized
@@ -50,8 +63,9 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
 
     // Update the escrow authority
     bubblegum_escrow_data.authority = args.destination_authority;
-    bubblegum_escrow_data
-        .serialize(&mut &mut bubblegum_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+    bubblegum_escrow_data.serialize(
+        &mut &mut bubblegum_escrow_pda.try_borrow_mut_data()?.as_mut(),
+    )?;
 
     // Log outcome
     msg!("Ephemeral Rollups Wrapper: Transfered a BubblegumEscrow's authority");

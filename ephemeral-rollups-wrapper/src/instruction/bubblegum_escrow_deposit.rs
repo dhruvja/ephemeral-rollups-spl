@@ -1,12 +1,13 @@
 use borsh::BorshSerialize;
-use mpl_bubblegum::{accounts::TreeConfig, utils::get_asset_id};
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-    system_program,
-};
+use mpl_bubblegum::accounts::TreeConfig;
+use mpl_bubblegum::utils::get_asset_id;
+use solana_program::instruction::AccountMeta;
+use solana_program::instruction::Instruction;
+use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 
-use crate::{processor::bubblegum_escrow_deposit, state::bubblegum_escrow::BubblegumEscrow};
+use crate::processor::bubblegum_escrow_deposit;
+use crate::state::bubblegum_escrow::BubblegumEscrow;
 
 pub fn instruction(
     payer: &Pubkey,
@@ -24,7 +25,8 @@ pub fn instruction(
     let program_id = crate::ID;
 
     let asset = get_asset_id(tree, nonce);
-    let bubblegum_escrow_pda = BubblegumEscrow::generate_pda(validator, &asset, &program_id);
+    let bubblegum_escrow_pda =
+        BubblegumEscrow::generate_pda(validator, &asset, &program_id);
 
     let tree_config_pda = TreeConfig::find_pda(tree).0;
 
@@ -55,9 +57,5 @@ pub fn instruction(
     .serialize(&mut data)
     .unwrap();
 
-    Instruction {
-        program_id,
-        accounts,
-        data,
-    }
+    Instruction { program_id, accounts, data }
 }

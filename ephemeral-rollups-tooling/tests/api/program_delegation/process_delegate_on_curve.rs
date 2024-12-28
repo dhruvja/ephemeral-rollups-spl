@@ -1,25 +1,27 @@
 use anchor_lang::prelude::AccountMeta;
 use anchor_lang::AnchorSerialize;
-use ephemeral_rollups_sdk::consts::{BUFFER, DELEGATION_PROGRAM_ID};
-use ephemeral_rollups_sdk::pda::{
-    delegation_metadata_pda_from_pubkey, delegation_record_pda_from_pubkey,
-};
+use ephemeral_rollups_sdk::consts::BUFFER;
+use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
+use ephemeral_rollups_sdk::pda::delegation_metadata_pda_from_pubkey;
+use ephemeral_rollups_sdk::pda::delegation_record_pda_from_pubkey;
 use ephemeral_rollups_sdk::types::DelegateAccountArgs;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::system_program;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
+use solana_toolbox_endpoint::ToolboxEndpoint;
+use solana_toolbox_endpoint::ToolboxEndpointError;
 
 pub async fn process_delegate_on_curve(
-    endpoint: &mut Endpoint,
+    toolbox_endpoint: &mut ToolboxEndpoint,
     payer: &Keypair,
     account: &Keypair,
     lamports: u64,
-) -> Result<(), EndpointError> {
-    let rent_minimum_balance = endpoint.get_rent_minimum_balance(0).await?;
-    endpoint
+) -> Result<(), ToolboxEndpointError> {
+    let rent_minimum_balance =
+        toolbox_endpoint.get_rent_minimum_balance(0).await?;
+    toolbox_endpoint
         .process_system_create(
             payer,
             account,
@@ -32,8 +34,11 @@ pub async fn process_delegate_on_curve(
     let pubkey = account.pubkey();
     let system_program_id = system_program::ID;
 
-    let delegation_buffer_pda =
-        Pubkey::find_program_address(&[BUFFER, &pubkey.to_bytes()], &system_program_id).0;
+    let delegation_buffer_pda = Pubkey::find_program_address(
+        &[BUFFER, &pubkey.to_bytes()],
+        &system_program_id,
+    )
+    .0;
 
     let delegation_record_pda = delegation_record_pda_from_pubkey(&pubkey);
     let delegation_metadata_pda = delegation_metadata_pda_from_pubkey(&pubkey);
@@ -61,7 +66,7 @@ pub async fn process_delegate_on_curve(
         data,
     };
 
-    endpoint
+    toolbox_endpoint
         .process_instruction_with_signers(instruction, payer, &[account])
         .await?;
 

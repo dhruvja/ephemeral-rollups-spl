@@ -1,12 +1,13 @@
 use borsh::BorshSerialize;
-use ephemeral_rollups_sdk::consts::{MAGIC_CONTEXT_ID, MAGIC_PROGRAM_ID};
+use ephemeral_rollups_sdk::consts::MAGIC_CONTEXT_ID;
+use ephemeral_rollups_sdk::consts::MAGIC_PROGRAM_ID;
 use mpl_bubblegum::utils::get_asset_id;
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-};
+use solana_program::instruction::AccountMeta;
+use solana_program::instruction::Instruction;
+use solana_program::pubkey::Pubkey;
 
-use crate::{processor::bubblegum_escrow_undelegate, state::bubblegum_escrow::BubblegumEscrow};
+use crate::processor::bubblegum_escrow_undelegate;
+use crate::state::bubblegum_escrow::BubblegumEscrow;
 
 pub fn instruction(
     payer: &Pubkey,
@@ -18,7 +19,8 @@ pub fn instruction(
     let program_id = crate::ID;
 
     let asset = get_asset_id(tree, nonce);
-    let bubblegum_escrow_pda = BubblegumEscrow::generate_pda(validator, &asset, &program_id);
+    let bubblegum_escrow_pda =
+        BubblegumEscrow::generate_pda(validator, &asset, &program_id);
 
     let accounts = vec![
         AccountMeta::new(*payer, true),
@@ -38,9 +40,5 @@ pub fn instruction(
     .serialize(&mut data)
     .unwrap();
 
-    Instruction {
-        program_id,
-        accounts,
-        data,
-    }
+    Instruction { program_id, accounts, data }
 }

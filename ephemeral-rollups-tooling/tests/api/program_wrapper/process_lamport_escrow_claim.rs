@@ -1,19 +1,19 @@
+use ephemeral_rollups_wrapper::instruction::lamport_escrow_claim;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
-
-use ephemeral_rollups_wrapper::instruction::lamport_escrow_claim;
+use solana_toolbox_endpoint::ToolboxEndpoint;
+use solana_toolbox_endpoint::ToolboxEndpointError;
 
 pub async fn process_lamport_escrow_claim(
-    endpoint: &mut Endpoint,
+    toolbox_endpoint: &mut ToolboxEndpoint,
     payer: &Keypair,
     authority: &Keypair,
     destination: &Pubkey,
     validator: &Pubkey,
     slot: u64,
     lamports: u64,
-) -> Result<(), EndpointError> {
+) -> Result<(), ToolboxEndpointError> {
     let instruction = lamport_escrow_claim::instruction(
         &authority.pubkey(),
         destination,
@@ -21,7 +21,7 @@ pub async fn process_lamport_escrow_claim(
         slot,
         lamports,
     );
-    endpoint
+    toolbox_endpoint
         .process_instruction_with_signers(instruction, payer, &[authority])
         .await?;
     Ok(())

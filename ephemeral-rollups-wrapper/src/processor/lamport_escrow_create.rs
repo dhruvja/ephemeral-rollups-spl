@@ -1,16 +1,22 @@
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::BorshDeserialize;
+use borsh::BorshSerialize;
+use solana_program::account_info::AccountInfo;
+use solana_program::entrypoint::ProgramResult;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
-use solana_program::{msg, system_program};
+use solana_program::pubkey::Pubkey;
+use solana_program::system_program;
 
 use crate::lamport_escrow_seeds_generator;
 use crate::state::lamport_escrow::LamportEscrow;
 use crate::util::create::create_pda;
-use crate::util::ensure::{
-    ensure_is_owned_by_program, ensure_is_pda, ensure_is_program_id, ensure_is_signer,
-};
+use crate::util::ensure::ensure_is_owned_by_program;
+use crate::util::ensure::ensure_is_pda;
+use crate::util::ensure::ensure_is_program_id;
+use crate::util::ensure::ensure_is_signer;
 
-pub const DISCRIMINANT: [u8; 8] = [0x1a, 0x92, 0xb7, 0x8b, 0x57, 0xad, 0x99, 0x02];
+pub const DISCRIMINANT: [u8; 8] =
+    [0x1A, 0x92, 0xB7, 0x8B, 0x57, 0xAD, 0x99, 0x02];
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
 pub struct Args {
@@ -19,9 +25,14 @@ pub struct Args {
     pub slot: u64,
 }
 
-pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
+pub fn process(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    data: &[u8],
+) -> ProgramResult {
     // Read instruction inputs
-    let [payer, lamport_escrow_pda, system_program_id] = accounts else {
+    let [payer, lamport_escrow_pda, system_program_id] = accounts
+    else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
@@ -36,9 +47,13 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     ensure_is_owned_by_program(lamport_escrow_pda, &system_program::ID)?;
 
     // Verify the seeds of the escrow PDA
-    let lamport_escrow_seeds =
-        lamport_escrow_seeds_generator!(args.authority, args.validator, args.slot);
-    let lamport_escrow_bump = ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
+    let lamport_escrow_seeds = lamport_escrow_seeds_generator!(
+        args.authority,
+        args.validator,
+        args.slot
+    );
+    let lamport_escrow_bump =
+        ensure_is_pda(lamport_escrow_pda, lamport_escrow_seeds, program_id)?;
 
     // Initialize the escrow PDA
     create_pda(
@@ -52,10 +67,11 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
     )?;
 
     // Initialize the escrow data
-    let lamport_escrow_data = LamportEscrow {
-        discriminant: LamportEscrow::discriminant(),
-    };
-    lamport_escrow_data.serialize(&mut &mut lamport_escrow_pda.try_borrow_mut_data()?.as_mut())?;
+    let lamport_escrow_data =
+        LamportEscrow { discriminant: LamportEscrow::discriminant() };
+    lamport_escrow_data.serialize(
+        &mut &mut lamport_escrow_pda.try_borrow_mut_data()?.as_mut(),
+    )?;
 
     // Log outcome
     msg!("Ephemeral Rollups Wrapper: Created a new LamportEscrow");

@@ -3,16 +3,16 @@ use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
+use solana_toolbox_endpoint::ToolboxEndpointError;
 
-use crate::api::create_program_test_context::create_program_test_context;
-
+use crate::api::create_localnet_toolbox_endpoint::create_localnet_toolbox_endpoint;
 use crate::api::program_wrapper::process_lamport_escrow_create::process_lamport_escrow_create;
 use crate::api::program_wrapper::process_lamport_escrow_delegate::process_lamport_escrow_delegate;
 
 #[tokio::test]
-async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), EndpointError> {
-    let mut endpoint = Endpoint::from(create_program_test_context().await);
+async fn localnet_lamport_escrow_create_fund_delegate(
+) -> Result<(), ToolboxEndpointError> {
+    let mut toolbox_endpoint = create_localnet_toolbox_endpoint().await;
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -28,18 +28,18 @@ async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), EndpointEr
         authority_lamport_escrow_slot,
         &ephemeral_rollups_wrapper::ID,
     );
-    let authority_lamport_escrow_rent = endpoint
+    let authority_lamport_escrow_rent = toolbox_endpoint
         .get_rent_minimum_balance(LamportEscrow::space())
         .await?;
 
     // Fund payer
-    endpoint
+    toolbox_endpoint
         .process_airdrop(&payer.pubkey(), 1_000_000_000_000)
         .await?;
 
     // Create a new lamport escrow
     process_lamport_escrow_create(
-        &mut endpoint,
+        &mut toolbox_endpoint,
         &payer,
         &authority.pubkey(),
         &validator,
@@ -50,13 +50,13 @@ async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), EndpointEr
     // Escrow should be ready
     assert_eq!(
         authority_lamport_escrow_rent,
-        endpoint
+        toolbox_endpoint
             .get_account_lamports(&authority_lamport_escrow_pda)
             .await?
     );
 
     // Send some lamports to the escrow from somewhere
-    endpoint
+    toolbox_endpoint
         .process_system_transfer(
             &payer,
             &payer,
@@ -68,14 +68,14 @@ async fn localnet_lamport_escrow_create_fund_delegate() -> Result<(), EndpointEr
     // Escrow should be funded
     assert_eq!(
         authority_lamport_escrow_rent + 10 * LAMPORTS_PER_SOL,
-        endpoint
+        toolbox_endpoint
             .get_account_lamports(&authority_lamport_escrow_pda)
             .await?
     );
 
     // Delegate it immediately
     process_lamport_escrow_delegate(
-        &mut endpoint,
+        &mut toolbox_endpoint,
         &payer,
         &authority,
         &validator,

@@ -4,16 +4,17 @@ use mpl_bubblegum::types::MetadataArgs;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
+use solana_toolbox_endpoint::ToolboxEndpoint;
+use solana_toolbox_endpoint::ToolboxEndpointError;
 
 pub async fn process_mint(
-    endpoint: &mut Endpoint,
+    toolbox_endpoint: &mut ToolboxEndpoint,
     payer: &Keypair,
     minter: &Keypair,
     tree: &Pubkey,
     owner: &Pubkey,
     metadata: &MetadataArgs,
-) -> Result<(), EndpointError> {
+) -> Result<(), ToolboxEndpointError> {
     let tree_config_pda = TreeConfig::find_pda(tree).0;
     let mint_instruction = MintV1Builder::new()
         .leaf_delegate(*owner)
@@ -24,7 +25,7 @@ pub async fn process_mint(
         .tree_creator_or_delegate(minter.pubkey())
         .metadata(metadata.clone())
         .instruction();
-    endpoint
+    toolbox_endpoint
         .process_instruction_with_signers(mint_instruction, payer, &[minter])
         .await?;
     Ok(())

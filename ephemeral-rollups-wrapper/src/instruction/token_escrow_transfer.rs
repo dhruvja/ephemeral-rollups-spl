@@ -1,10 +1,10 @@
 use borsh::BorshSerialize;
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-};
+use solana_program::instruction::AccountMeta;
+use solana_program::instruction::Instruction;
+use solana_program::pubkey::Pubkey;
 
-use crate::{processor::token_escrow_transfer, state::token_escrow::TokenEscrow};
+use crate::processor::token_escrow_transfer;
+use crate::state::token_escrow::TokenEscrow;
 
 pub fn instruction(
     source_authority: &Pubkey,
@@ -51,9 +51,5 @@ pub fn instruction(
     .serialize(&mut data)
     .unwrap();
 
-    Instruction {
-        program_id,
-        accounts,
-        data,
-    }
+    Instruction { program_id, accounts, data }
 }

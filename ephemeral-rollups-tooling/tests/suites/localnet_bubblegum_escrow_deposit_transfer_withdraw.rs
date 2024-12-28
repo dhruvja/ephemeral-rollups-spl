@@ -1,24 +1,30 @@
 use ephemeral_rollups_wrapper::state::bubblegum_escrow::BubblegumEscrow;
-use mpl_bubblegum::hash::{hash_creators, hash_metadata};
-use mpl_bubblegum::types::{Creator, LeafSchema, MetadataArgs, TokenProgramVersion, TokenStandard};
+use mpl_bubblegum::hash::hash_creators;
+use mpl_bubblegum::hash::hash_metadata;
+use mpl_bubblegum::types::Creator;
+use mpl_bubblegum::types::LeafSchema;
+use mpl_bubblegum::types::MetadataArgs;
+use mpl_bubblegum::types::TokenProgramVersion;
+use mpl_bubblegum::types::TokenStandard;
 use mpl_bubblegum::utils::get_asset_id;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_toolbox_endpoint::{Endpoint, EndpointError};
-use spl_merkle_tree_reference::{MerkleTree, Node};
+use solana_toolbox_endpoint::ToolboxEndpointError;
+use spl_merkle_tree_reference::MerkleTree;
+use spl_merkle_tree_reference::Node;
 
-use crate::api::create_program_test_context::create_program_test_context;
+use crate::api::create_localnet_toolbox_endpoint::create_localnet_toolbox_endpoint;
 use crate::api::program_bubblegum::process_create_tree::process_create_tree;
 use crate::api::program_bubblegum::process_mint::process_mint;
-
 use crate::api::program_wrapper::process_bubblegum_escrow_deposit::process_bubblegum_escrow_deposit;
 use crate::api::program_wrapper::process_bubblegum_escrow_transfer::process_bubblegum_escrow_transfer;
 use crate::api::program_wrapper::process_bubblegum_escrow_withdraw::process_bubblegum_escrow_withdraw;
 
 #[tokio::test]
-async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), EndpointError> {
-    let mut endpoint = Endpoint::from(create_program_test_context().await);
+async fn localnet_bubblegum_escrow_deposit_transfer_withdraw(
+) -> Result<(), ToolboxEndpointError> {
+    let mut toolbox_endpoint = create_localnet_toolbox_endpoint().await;
 
     // Important keys used in the test
     let validator = Pubkey::new_unique();
@@ -35,13 +41,13 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
     let destination = Keypair::new();
 
     // Fund payer
-    endpoint
+    toolbox_endpoint
         .process_airdrop(&payer.pubkey(), 1_000_000_000_000)
         .await?;
 
     // Create the bubblegum tree
     process_create_tree(
-        &mut endpoint,
+        &mut toolbox_endpoint,
         &payer,
         &bubblegum_minter,
         &bubblegum_tree,
@@ -49,8 +55,10 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
     )
     .await?;
 
-    // We create a local tree, so that we can keep track of the hashes involved without reading the ledger
-    let mut bubblegum_proof = MerkleTree::new(vec![Node::default(); 1 << 6].as_slice());
+    // We create a local tree, so that we can keep track of the hashes involved
+    // without reading the ledger
+    let mut bubblegum_proof =
+        MerkleTree::new(vec![Node::default(); 1 << 6].as_slice());
 
     // Define an NFT
     let bubblegum_nft_metadata = MetadataArgs {
@@ -74,7 +82,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
 
     // Mint the new nft to the "source"
     process_mint(
-        &mut endpoint,
+        &mut toolbox_endpoint,
         &payer,
         &bubblegum_minter,
         &bubblegum_tree.pubkey(),
@@ -86,9 +94,12 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
     // After minting, we expect to know the information about the asset
     let bubblegum_nft_nonce = 0;
     let bubblegum_nft_index = 0;
-    let bubblegum_nft_data_hash = hash_metadata(&bubblegum_nft_metadata).unwrap();
-    let bubblegum_nft_creator_hash = hash_creators(&bubblegum_nft_metadata.creators);
-    let bubblegum_nft_asset_id = get_asset_id(&bubblegum_tree.pubkey(), bubblegum_nft_nonce);
+    let bubblegum_nft_data_hash =
+        hash_metadata(&bubblegum_nft_metadata).unwrap();
+    let bubblegum_nft_creator_hash =
+        hash_creators(&bubblegum_nft_metadata.creators);
+    let bubblegum_nft_asset_id =
+        get_asset_id(&bubblegum_tree.pubkey(), bubblegum_nft_nonce);
 
     // After mint, we update the local proof for later use
     bubblegum_proof.add_leaf(
@@ -106,7 +117,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
 
     // Create a new bubblegum escrow (owned by authority1)
     process_bubblegum_escrow_deposit(
-        &mut endpoint,
+        &mut toolbox_endpoint,
         &payer,
         &authority1.pubkey(),
         &validator,
@@ -131,8 +142,10 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
     // The authority1 must now be the escrow authority
     assert_eq!(
         authority1.pubkey(),
-        endpoint
-            .get_account_data_borsh_deserialized::<BubblegumEscrow>(&bubblegum_escrow_pda)
+        toolbox_endpoint
+            .get_account_data_borsh_deserialized::<BubblegumEscrow>(
+                &bubblegum_escrow_pda
+            )
             .await?
             .unwrap()
             .authority
@@ -154,7 +167,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
 
     // Transfer the ownership to authority2
     process_bubblegum_escrow_transfer(
-        &mut endpoint,
+        &mut toolbox_endpoint,
         &payer,
         &authority1,
         &authority2.pubkey(),
@@ -167,8 +180,10 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
     // The authority2 must now be the escrow authority
     assert_eq!(
         authority2.pubkey(),
-        endpoint
-            .get_account_data_borsh_deserialized::<BubblegumEscrow>(&bubblegum_escrow_pda)
+        toolbox_endpoint
+            .get_account_data_borsh_deserialized::<BubblegumEscrow>(
+                &bubblegum_escrow_pda
+            )
             .await?
             .unwrap()
             .authority
@@ -176,7 +191,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
 
     // Withdraw the cNFT from the escrow back to "destination"
     process_bubblegum_escrow_withdraw(
-        &mut endpoint,
+        &mut toolbox_endpoint,
         &payer,
         &authority2,
         &destination.pubkey(),
@@ -192,10 +207,7 @@ async fn localnet_bubblegum_escrow_deposit_transfer_withdraw() -> Result<(), End
     .await?;
 
     // The escrow must have been destroyed
-    assert_eq!(
-        false,
-        endpoint.get_account_exists(&bubblegum_escrow_pda).await?
-    );
+    assert!(!toolbox_endpoint.get_account_exists(&bubblegum_escrow_pda).await?);
 
     // Done
     Ok(())
