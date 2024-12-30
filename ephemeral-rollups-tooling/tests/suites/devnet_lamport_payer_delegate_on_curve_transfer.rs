@@ -62,7 +62,7 @@ async fn devnet_lamport_payer_delegate_on_curve_transfer(
 
     // Account base rent needs to be taken into account
     let rent_minimum_balance =
-        toolbox_endpoint_chain.get_rent_minimum_balance(0).await?;
+        toolbox_endpoint_chain.get_sysvar_rent().await?.minimum_balance(0);
 
     // Check the balances
     assert_eq!(

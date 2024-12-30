@@ -62,8 +62,9 @@ async fn devnet_lamport_escrow_create_fund_delegate_undelegate(
     );
 
     let lamport_escrow_rent = toolbox_endpoint_chain
-        .get_rent_minimum_balance(LamportEscrow::space())
-        .await?;
+        .get_sysvar_rent()
+        .await?
+        .minimum_balance(LamportEscrow::space());
 
     // Create a new lamport escrow
     process_lamport_escrow_create(

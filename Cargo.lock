@@ -5495,13 +5495,14 @@ dependencies = [
 
 [[package]]
 name = "solana_toolbox_endpoint"
-version = "0.1.7-solana-1.18.26"
+version = "0.1.10-solana-1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "966f6a78ade317bd63d97a0a2d9978d6bb77630a623f1156935549beeb230b7d"
+checksum = "83a019be2704e2e8352a5edfb2580903eaf9851e508bc794100373d3ac9ec578"
 dependencies = [
  "async-trait",
  "bincode",
  "borsh 1.5.3",
+ "serde",
  "solana-client",
  "solana-program-test",
  "solana-sdk",

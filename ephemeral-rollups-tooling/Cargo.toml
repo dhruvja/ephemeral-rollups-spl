@@ -14,7 +14,7 @@ ephemeral-rollups-wrapper = { path = "../ephemeral-rollups-wrapper" }
 async-trait = "0.1.73"
 
 solana-sdk = "1.18.26"
-solana_toolbox_endpoint = "0.1.7-solana-1.18.26"
+solana_toolbox_endpoint = "0.1.10-solana-1.18.26"
 
 spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
 spl-account-compression = { version = "0.4.2", features = ["no-entrypoint"] }

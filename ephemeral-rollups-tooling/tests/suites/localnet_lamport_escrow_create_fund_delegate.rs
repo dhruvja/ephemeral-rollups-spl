@@ -29,8 +29,9 @@ async fn localnet_lamport_escrow_create_fund_delegate(
         &ephemeral_rollups_wrapper::ID,
     );
     let authority_lamport_escrow_rent = toolbox_endpoint
-        .get_rent_minimum_balance(LamportEscrow::space())
-        .await?;
+        .get_sysvar_rent()
+        .await?
+        .minimum_balance(LamportEscrow::space());
 
     // Fund payer
     toolbox_endpoint

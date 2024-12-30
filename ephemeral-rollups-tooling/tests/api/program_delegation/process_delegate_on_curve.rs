@@ -20,7 +20,7 @@ pub async fn process_delegate_on_curve(
     lamports: u64,
 ) -> Result<(), ToolboxEndpointError> {
     let rent_minimum_balance =
-        toolbox_endpoint.get_rent_minimum_balance(0).await?;
+        toolbox_endpoint.get_sysvar_rent().await?.minimum_balance(0);
     toolbox_endpoint
         .process_system_create(
             payer,

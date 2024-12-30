@@ -21,7 +21,7 @@ pub async fn process_create_tree(
     let create_account_instruction = create_account(
         &payer.pubkey(),
         &tree.pubkey(),
-        toolbox_endpoint.get_rent_minimum_balance(size).await?,
+        toolbox_endpoint.get_sysvar_rent().await?.minimum_balance(size),
         size as u64,
         &spl_account_compression::ID,
     );
