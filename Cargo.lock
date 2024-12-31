@@ -1554,9 +1554,7 @@ dependencies = [
 name = "ephemeral-rollups-tooling"
 version = "0.0.1"
 dependencies = [
- "anchor-lang",
- "async-trait",
- "borsh 1.5.3",
+ "borsh 0.10.4",
  "ephemeral-rollups-sdk",
  "ephemeral-rollups-wrapper",
  "mpl-bubblegum",
@@ -5495,9 +5493,9 @@ dependencies = [
 
 [[package]]
 name = "solana_toolbox_endpoint"
-version = "0.1.10-solana-1.18.26"
+version = "0.1.13-solana-1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83a019be2704e2e8352a5edfb2580903eaf9851e508bc794100373d3ac9ec578"
+checksum = "f58e1b2345e0430ec97fb8922dcb7a1a2c63a120ce7cf7d0b92ff6f9eaf4e11b"
 dependencies = [
  "async-trait",
  "bincode",
@@ -5508,7 +5506,6 @@ dependencies = [
  "solana-sdk",
  "spl-associated-token-account",
  "spl-token",
- "tokio",
 ]
 
 [[package]]

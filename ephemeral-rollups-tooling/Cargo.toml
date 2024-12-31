@@ -11,18 +11,13 @@ default = []
 ephemeral-rollups-sdk = "0.0.7"
 ephemeral-rollups-wrapper = { path = "../ephemeral-rollups-wrapper" }
 
-async-trait = "0.1.73"
-
 solana-sdk = "1.18.26"
-solana_toolbox_endpoint = "0.1.10-solana-1.18.26"
+solana_toolbox_endpoint = "0.1.13-solana-1.18.26"
 
 spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
 spl-account-compression = { version = "0.4.2", features = ["no-entrypoint"] }
-
+spl-merkle-tree-reference = { version = "0.1.0" }
 mpl-bubblegum = { version = "1.4.0" }
-spl-merkle-tree-reference = "0.1.0"
 
-borsh = "1.5.1"
+borsh = { version = "0.10.4" }
 tokio = { version = "1.0.0", features = ["macros"] }
-
-anchor-lang = { version = "0.29.0" }

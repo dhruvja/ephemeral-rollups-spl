@@ -1,10 +1,10 @@
-use anchor_lang::prelude::AccountMeta;
-use anchor_lang::AnchorSerialize;
+use borsh::BorshSerialize;
 use ephemeral_rollups_sdk::consts::BUFFER;
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_sdk::pda::delegation_metadata_pda_from_pubkey;
 use ephemeral_rollups_sdk::pda::delegation_record_pda_from_pubkey;
 use ephemeral_rollups_sdk::types::DelegateAccountArgs;
+use solana_sdk::instruction::AccountMeta;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -50,7 +50,7 @@ pub async fn process_delegate_on_curve(
     };
 
     let mut data = 0_u64.to_le_bytes().to_vec();
-    data.extend_from_slice(&args.try_to_vec().unwrap());
+    args.serialize(&mut data).unwrap();
 
     let instruction = Instruction {
         program_id: DELEGATION_PROGRAM_ID,
