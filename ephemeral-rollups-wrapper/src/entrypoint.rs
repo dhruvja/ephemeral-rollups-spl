@@ -5,11 +5,11 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 use crate::processor::apply_undelegation;
-use crate::processor::bubblegum_escrow_delegate;
-use crate::processor::bubblegum_escrow_deposit;
-use crate::processor::bubblegum_escrow_transfer;
-use crate::processor::bubblegum_escrow_undelegate;
-use crate::processor::bubblegum_escrow_withdraw;
+// use crate::processor::bubblegum_escrow_delegate;
+// use crate::processor::bubblegum_escrow_deposit;
+// use crate::processor::bubblegum_escrow_transfer;
+// use crate::processor::bubblegum_escrow_undelegate;
+// use crate::processor::bubblegum_escrow_withdraw;
 use crate::processor::lamport_escrow_claim;
 use crate::processor::lamport_escrow_create;
 use crate::processor::lamport_escrow_delegate;
@@ -40,21 +40,21 @@ fn process_instruction(
         tag.try_into().map_err(|_| ProgramError::InvalidInstructionData)?;
 
     match tag_array {
-        bubblegum_escrow_deposit::DISCRIMINANT => {
-            bubblegum_escrow_deposit::process(program_id, accounts, data)
-        },
-        bubblegum_escrow_delegate::DISCRIMINANT => {
-            bubblegum_escrow_delegate::process(program_id, accounts, data)
-        },
-        bubblegum_escrow_transfer::DISCRIMINANT => {
-            bubblegum_escrow_transfer::process(program_id, accounts, data)
-        },
-        bubblegum_escrow_undelegate::DISCRIMINANT => {
-            bubblegum_escrow_undelegate::process(program_id, accounts, data)
-        },
-        bubblegum_escrow_withdraw::DISCRIMINANT => {
-            bubblegum_escrow_withdraw::process(program_id, accounts, data)
-        },
+        // bubblegum_escrow_deposit::DISCRIMINANT => {
+        //     bubblegum_escrow_deposit::process(program_id, accounts, data)
+        // },
+        // bubblegum_escrow_delegate::DISCRIMINANT => {
+        //     bubblegum_escrow_delegate::process(program_id, accounts, data)
+        // },
+        // bubblegum_escrow_transfer::DISCRIMINANT => {
+        //     bubblegum_escrow_transfer::process(program_id, accounts, data)
+        // },
+        // bubblegum_escrow_undelegate::DISCRIMINANT => {
+        //     bubblegum_escrow_undelegate::process(program_id, accounts, data)
+        // },
+        // bubblegum_escrow_withdraw::DISCRIMINANT => {
+        //     bubblegum_escrow_withdraw::process(program_id, accounts, data)
+        // },
         lamport_escrow_create::DISCRIMINANT => {
             lamport_escrow_create::process(program_id, accounts, data)
         },

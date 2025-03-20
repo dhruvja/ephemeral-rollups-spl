@@ -2,6 +2,8 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_sdk::cpi::delegate_account;
+use ephemeral_rollups_sdk::cpi::DelegateAccounts;
+use ephemeral_rollups_sdk::cpi::DelegateConfig;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::msg;
@@ -68,20 +70,22 @@ pub fn process(
         return Err(ProgramError::InvalidAccountData);
     }
 
+    let accounts = DelegateAccounts {
+        payer,
+        pda: lamport_escrow_pda,
+        owner_program: owner_program_id,
+        buffer: delegation_buffer_pda,
+        delegation_record: delegation_record_pda,
+        delegation_metadata: delegation_metadata_pda,
+        delegation_program: delegation_program_id,
+        system_program: system_program_id,
+    };
     // Delegate the escrow, relinquish control on chain (it will become
     // claimable in the Ephem)
     delegate_account(
-        payer,
-        lamport_escrow_pda,
-        owner_program_id,
-        delegation_buffer_pda,
-        delegation_record_pda,
-        delegation_metadata_pda,
-        delegation_program_id,
-        system_program_id,
-        lamport_escrow_seeds,
-        i64::MAX,
-        u32::MAX,
+        accounts,
+        lamport_escrow_seeds, 
+        DelegateConfig::default(), 
     )?;
 
     // Log outcome

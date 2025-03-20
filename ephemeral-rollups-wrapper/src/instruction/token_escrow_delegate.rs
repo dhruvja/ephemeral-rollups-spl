@@ -1,8 +1,8 @@
 use borsh::BorshSerialize;
 use ephemeral_rollups_sdk::consts::BUFFER;
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
-use ephemeral_rollups_sdk::pda::delegation_metadata_pda_from_pubkey;
-use ephemeral_rollups_sdk::pda::delegation_record_pda_from_pubkey;
+use ephemeral_rollups_sdk::pda::delegation_metadata_pda_from_delegated_account;
+use ephemeral_rollups_sdk::pda::delegation_record_pda_from_delegated_account;
 use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
 use solana_program::pubkey::Pubkey;
@@ -34,9 +34,9 @@ pub fn instruction(
     .0;
 
     let delegation_record_pda =
-        delegation_record_pda_from_pubkey(&token_escrow_pda);
+        delegation_record_pda_from_delegated_account(&token_escrow_pda);
     let delegation_metadata_pda =
-        delegation_metadata_pda_from_pubkey(&token_escrow_pda);
+        delegation_metadata_pda_from_delegated_account(&token_escrow_pda);
     let delegation_program_id = DELEGATION_PROGRAM_ID;
 
     let accounts = vec![

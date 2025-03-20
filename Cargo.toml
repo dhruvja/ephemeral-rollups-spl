@@ -1,3 +1,3 @@
 [workspace]
 
-members = ["ephemeral-rollups-wrapper", "ephemeral-rollups-tooling"]
+members = ["ephemeral-rollups-wrapper"]
