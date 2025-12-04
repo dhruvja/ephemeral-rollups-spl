@@ -31,15 +31,22 @@ pub fn process(
     data: &[u8],
 ) -> ProgramResult {
     // Read instruction inputs
-    let [source_authority, source_token_escrow_pda, destination_token_escrow_pda] =
+    let [source_authority, source_token_escrow_pda, destination_token_escrow_pda, ..] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
     let args = Args::try_from_slice(data)?;
 
-    // Verify that the authority user is indeed the one initiating this IX
-    ensure_is_signer(source_authority)?;
+    // check if the destination_authority is the user_platform_authority
+    let user_platform_authority =
+        get_user_platform_authority(*source_authority.key, args.validator);
+
+    // dont check signer if the destination authority is the user_platform_authority
+    if !(user_platform_authority == args.destination_authority && args.destination_slot == 0) {
+        // Verify that the authority user is indeed the one initiating this IX
+        ensure_is_signer(source_authority)?;
+    }
 
     // Verify that the program has proper control of the escrow PDA (and that
     // it's been initialized)
@@ -124,4 +131,15 @@ pub fn process(
 
     // Done
     Ok(())
+}
+
+pub fn get_user_platform_authority(
+    authority: Pubkey,
+    program_id: Pubkey,
+) -> Pubkey {
+    Pubkey::find_program_address(
+        &[b"user_platform_authority", authority.as_ref()],
+        &program_id,
+    )
+    .0
 }
