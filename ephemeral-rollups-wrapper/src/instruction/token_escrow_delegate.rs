@@ -1,5 +1,5 @@
 use borsh::BorshSerialize;
-use ephemeral_rollups_sdk::consts::BUFFER;
+use crate::DELEGATION_BUFFER_SEED;
 use ephemeral_rollups_sdk::consts::DELEGATION_PROGRAM_ID;
 use ephemeral_rollups_sdk::pda::delegation_metadata_pda_from_delegated_account;
 use ephemeral_rollups_sdk::pda::delegation_record_pda_from_delegated_account;
@@ -28,7 +28,7 @@ pub fn instruction(
     );
 
     let delegation_buffer_pda = Pubkey::find_program_address(
-        &[BUFFER, &token_escrow_pda.to_bytes()],
+        &[DELEGATION_BUFFER_SEED, &token_escrow_pda.to_bytes()],
         &program_id,
     )
     .0;
